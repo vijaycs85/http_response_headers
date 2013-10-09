@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the HTTP response headers module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function http_response_headers_schema() {
+  $schema['http_response_headers'] = array(
+    'description' => 'Stores customisation settings of HTTP headers, such as region and visibility settings.',
+    'fields' => array(
+      'rule_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => 'Unique rule ID.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => 'Name of the rule.',
+      ),
+      'header' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => "The HTTP header; for example, 'Cache-Control' to set cache lifetime.",
+      ),
+      'header_value' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => "The HTTP header value;",
+      ),
+      'visibility' => array(
+        'type' => 'varchar',
+        'length' => 11,
+        'not null' => FALSE,
+        'description' => 'Flag to indicate how to set headers on pages. (0 = Show on all pages except listed pages, 1 = Show only on listed pages)',
+      ),
+      'pages' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Contains a list of paths on which to include/exclude the rule, depending on "visibility" setting.',
+      ),
+      'types' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => FALSE,
+        'description' => 'Content types',
+      ),
+      'roles' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => FALSE,
+        'description' => 'User roles',
+      ),
+    ),
+    'primary key' => array('rule_id'),
+    'indexes' => array(
+      'list' => array('rule_id', 'name', 'header', 'header_value', 'visibility', 'pages', 'types', 'roles'),
+    ),
+  );
+
+  return $schema;
+}

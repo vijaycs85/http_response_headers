@@ -1,0 +1,3 @@
+name = HTTP Response Headers
+description = Allows to customize HTTP response headers.
+core = 7.x

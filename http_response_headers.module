@@ -1,0 +1,330 @@
+<?php
+
+/**
+ * @file
+ *
+ * Contains HTTP response headers.
+ */
+
+
+/**
+ * Sets this header on every page except the listed pages.
+ */
+define('HTTP_HEADER_VISIBILITY_NOTLISTED', 0);
+
+/**
+ * Sets this header on only the listed pages.
+ */
+define('HTTP_HEADER_VISIBILITY_LISTED', 1);
+
+
+/**
+ * Implements hook_init().
+ */
+function http_response_headers_init() {
+  $rules = http_response_headers_get_rules();
+  $callbacks = http_response_headers_get_header_callbacks();
+  foreach ($rules as $rule) {
+    $header_value = $rule->header_value;
+
+    // Process data with callback, if exist.
+    if (isset($callbacks[$rule->header]) && $callback = $callbacks[$rule->header]) {
+      if (function_exists($callback)) {
+        $header_value = call_user_func_array($callback, array($rule->header_value));
+      }
+
+    }
+    drupal_add_http_header($rule->header, $header_value);
+  }
+}
+
+/**
+ * Provides applicable rules for current page.
+ *
+ * @return mixed
+ */
+function http_response_headers_get_rules() {
+  global $user;
+
+  $result = db_select('http_response_headers')
+    ->fields('http_response_headers')
+    ->execute();
+
+  $rules = $result->fetchAllAssoc('rule_id');
+
+  foreach ($rules as $key => $rule) {
+
+    // If a rule has no roles associated, it is displayed for every role.
+    // For rules with roles associated, if none of the user's roles matches
+    // the settings from this rule, remove it from the rule list.
+    if (!empty($rule->roles) && !array_intersect(explode(',', $rule->roles), array_keys($user->roles))) {
+      // No match.
+      unset($rules[$key]);
+      continue;
+    }
+
+    $enabled = TRUE;
+    // Limited visibility rules must list at least one page.
+    if ($rule->visibility == HTTP_HEADER_VISIBILITY_LISTED && empty($rule->pages)) {
+      $enabled = FALSE;
+    }
+
+    if (!$enabled) {
+      unset($rules[$key]);
+      continue;
+    }
+
+    // Match path if necessary.
+    if ($rule->pages) {
+      // Convert path to lowercase. This allows comparison of the same path
+      // with different case. Ex: /Page, /page, /PAGE.
+      $pages = drupal_strtolower($rule->pages);
+      if ($rule->visibility <= HTTP_HEADER_VISIBILITY_LISTED) {
+        // Convert the Drupal path to lowercase
+        $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+        // Compare the lowercase internal and lowercase path alias (if any).
+        $page_match = drupal_match_path($path, $pages);
+        if ($path != $_GET['q']) {
+          $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+        }
+        // When $rule->visibility has a value of 0 (HTTP_HEADER_VISIBILITY_NOTLISTED),
+        // the header is set on all pages except those listed in $rule->pages.
+        // When set to 1 (HTTP_HEADER_VISIBILITY_LISTED), it is set only on those
+        // pages listed in $rule->pages.
+        $page_match = !($rule->visibility xor $page_match);
+      }
+      else {
+        $page_match = FALSE;
+      }
+    }
+    else {
+      $page_match = TRUE;
+    }
+    if (!$page_match) {
+      unset($rules[$key]);
+    }
+
+    // Match content types.
+    $node = menu_get_object();
+    $node_types = node_type_get_types();
+    if (arg(0) == 'node' && arg(1) == 'add' && arg(2)) {
+      $node_add_arg = strtr(arg(2), '-', '_');
+    }
+    // If a rule has no node types associated, it is displayed for every type.
+    // For rules with node types associated, if the node type does not match
+    // the settings from this rule, remove it from the list.
+    if (!empty($rule->types)) {
+      $rule_node_types = explode(',', $rule->types);
+      if (!empty($node)) {
+        // This is a node or node edit page.
+        if (!in_array($node->type, $rule_node_types)) {
+          // This rule should not be set for this node type.
+          unset($rules[$key]);
+          continue;
+        }
+      }
+      elseif (isset($node_add_arg) && isset($node_types[$node_add_arg])) {
+        // This is a node creation page
+        if (!in_array($node_add_arg, $rule_node_types)) {
+          // This header should not be set for this node type.
+          unset($rules[$key]);
+          continue;
+        }
+      }
+      else {
+        // This is not a node page, remove the rule.
+        unset($rules[$key]);
+        continue;
+      }
+    }
+  }
+
+  return $rules;
+}
+
+/**
+ * Implements hook_menu().
+ */
+
+function http_response_headers_menu() {
+
+  $items['admin/config/http-headers-customisation'] = array(
+    'title' => 'HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_list'),
+    'access arguments' => array('administer http headers customisation'),
+    'file' => 'http_response_headers.admin.inc',
+  );
+  $items['admin/config/http-headers-customisation/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/http-headers-customisation/add'] = array(
+    'title' => 'Add HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_add_form'),
+    'access arguments' => array('administer http headers customisation'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  $items['admin/config/http-headers-customisation/%/configure'] = array(
+    'title' => 'Configure HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_configure', 3),
+    'access arguments' => array('administer http headers customisation'),
+    'type' => MENU_CALLBACK,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  $items['admin/config/http-headers-customisation/%http_response_headers/delete'] = array(
+    'title' => 'Delete HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_delete_confirm', 3),
+    'access arguments' => array('administer http headers customisation'),
+    'type' => MENU_CALLBACK,
+    'file' => 'http_response_headers.admin.inc',
+  );
+  $items['admin/config/http-headers-customisation/settings'] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_settings_form'),
+    'access arguments' => array('administer http headers customisation'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function http_response_headers_permission() {
+  return array(
+    'administer http headers customisation' => array(
+      'title' => t('Administer HTTP headers customisation'),
+    ),
+  );
+}
+
+/**
+ * Loads a HTTP header rule  object from the database.
+ *
+ * @param $rid
+ *   ID of the rule to load.
+ *
+ * @return stdClass
+ *   A header rule object.
+ */
+function http_response_headers_load($rid = NULL) {
+  if (!empty($rid)) {
+    return db_query('SELECT * FROM {http_response_headers} WHERE rule_id = :rule_id', array(':rule_id' => $rid))->fetchObject();
+  }
+
+  return NULL;
+
+}
+
+/**
+ * Callback to delete a header rule.
+ *
+ * @param $rid
+ */
+function http_response_headers_delete($rid) {
+  db_delete('http_response_headers')
+    ->condition('rule_id', $rid)
+    ->execute();
+
+  // Clear the header rules cache.
+  http_response_headers_cache_reset();
+
+}
+
+/**
+ * Updates the database cache of header rules.
+ *
+ * @see _http_response_headers_rebuild()
+ */
+function http_response_headers_rebuild() {
+  _http_response_headers_rebuild(TRUE);
+}
+
+
+/**
+ * Builds and returns the list of available HTTP header rules.
+ *
+ * The list of rules is built by header rules in the {http_response_headers} table.
+ *
+ * @param bool $rebuild
+ *  TRUE to rebuild node types. Equivalent to calling http_response_headers_rebuild().
+ *
+ * @return DatabaseStatementInterface|null
+ *   An object
+ */
+function _http_response_headers_rebuild($rebuild = FALSE) {
+  $cid = 'http_response_headers';
+
+  if (!$rebuild) {
+    $_header_rules = &drupal_static(__FUNCTION__);
+    if (isset($_header_rules)) {
+      return $_header_rules;
+    }
+    if ($cache = cache_get($cid)) {
+      $_header_rules = $cache->data;
+      return $_header_rules;
+    }
+  }
+
+  $_header_rules = db_select('http_response_headers', 'h')
+    ->fields('h')
+    ->execute()
+    ->fetchAllAssoc('rule_id');
+  cache_set($cid, $_header_rules);
+
+  return $_header_rules;
+}
+
+/**
+ * Clears the header rule cache.
+ */
+function http_response_headers_cache_reset() {
+  cache_clear_all('http_response_headers:', 'cache', TRUE);
+  drupal_static_reset('_http_response_headers_rebuild');
+}
+
+/**
+ * Provides process callback for headers.
+ *
+ * @return array
+ *   An array of process callbacks with keyed with header.
+ */
+function http_response_headers_get_header_callbacks() {
+  return array(
+    'Expires' => 'http_response_headers_expires_callback',
+    'Last-Modified' => 'http_response_headers_last_modified_callback',
+  );
+}
+
+/**
+ * Process callback for expires header.
+ *
+ * @param int $seconds
+ *
+ * @return string
+ */
+function http_response_headers_expires_callback($seconds = 0) {
+  return gmdate(DATE_RFC1123, strtotime("+ $seconds seconds"));
+}
+
+/**
+ * Process callback for last modified header.
+ *
+ * @param int $seconds
+ *
+ * @return string
+ */
+function http_response_headers_last_modified_callback($seconds = 0) {
+  return gmdate(DATE_RFC1123, strtotime("+ $seconds seconds"));
+}
