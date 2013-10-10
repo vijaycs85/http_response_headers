@@ -12,7 +12,7 @@
 function http_response_headers_drush_command() {
   $items = array();
 
-  // The 'http-header-set' command
+  // The 'http-header-set' command.
   $items['http-header-set'] = array(
     'description' => "Creates new HTTP header rule",
     'arguments' => array(
@@ -38,10 +38,10 @@ function http_response_headers_drush_command() {
       'drush http-header-set global_expires Expires 6000  --path=node/* --type=article --role=anonymous' => 'Make a header rule with cache set for 30 seconds on pages under node/ and type article viewed by anonymous user.',
     ),
     'aliases' => array('header-set'),
-    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH, // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
 
-  // The 'http-header-get' command
+  // The 'http-header-get' command.
   $items['http-header-get'] = array(
     'description' => "Retrieves HTTP header rule by machine name",
     'arguments' => array(
@@ -51,10 +51,10 @@ function http_response_headers_drush_command() {
       'drush http-header-get global_expires' => 'Get the header rule with machine name global_expires',
     ),
     'aliases' => array('header-get'),
-    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH, // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
 
-  // The 'http-header-get' command
+  // The 'http-header-get' command.
   $items['http-header-del'] = array(
     'description' => "Delete a HTTP header rule by machine name",
     'arguments' => array(
@@ -64,17 +64,19 @@ function http_response_headers_drush_command() {
       'drush http-header-del global_expires' => 'Delete the header rule with machine name global_expires',
     ),
     'aliases' => array('header-del'),
-    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH, // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
 
-  // The 'http-header-get' command
+  // The 'http-header-get' command.
   $items['http-header-list'] = array(
     'description' => "Lists all HTTP header rules available",
     'examples' => array(
       'drush http-header-list' => 'Delete the header rule with machine name global_expires',
     ),
     'aliases' => array('header-list'),
-    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH, // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
+
+  return $items;
 
 }

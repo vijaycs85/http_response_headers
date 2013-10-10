@@ -2,20 +2,19 @@
 
 /**
  * @file
- *
- * Contains HTTP response headers.
+ *   Contains HTTP response headers.
  */
 
 
 /**
  * Sets this header on every page except the listed pages.
  */
-define('HTTP_HEADER_VISIBILITY_NOTLISTED', 0);
+define('HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED', 0);
 
 /**
  * Sets this header on only the listed pages.
  */
-define('HTTP_HEADER_VISIBILITY_LISTED', 1);
+define('HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED', 1);
 
 
 /**
@@ -116,7 +115,7 @@ function http_response_headers_permission() {
 /**
  * Loads a HTTP header rule  object from the database.
  *
- * @param $rid
+ * @param string $rid
  *   ID of the rule to load.
  *
  * @return stdClass
@@ -136,6 +135,7 @@ function http_response_headers_load($rid = NULL) {
  * Provides applicable rules for current page.
  *
  * @return mixed
+ *   An array of matching header rules indexed with rule ID, NULL otherwise.
  */
 function http_response_headers_get_rules() {
   global $user;
@@ -159,7 +159,7 @@ function http_response_headers_get_rules() {
 
     $enabled = TRUE;
     // Limited visibility rules must list at least one page.
-    if ($rule->visibility == HTTP_HEADER_VISIBILITY_LISTED && empty($rule->pages)) {
+    if ($rule->visibility == HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED && empty($rule->pages)) {
       $enabled = FALSE;
     }
 
@@ -173,7 +173,7 @@ function http_response_headers_get_rules() {
       // Convert path to lowercase. This allows comparison of the same path
       // with different case. Ex: /Page, /page, /PAGE.
       $pages = drupal_strtolower($rule->pages);
-      if ($rule->visibility <= HTTP_HEADER_VISIBILITY_LISTED) {
+      if ($rule->visibility <= HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED) {
         // Convert the Drupal path to lowercase
         $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
         // Compare the lowercase internal and lowercase path alias (if any).
@@ -181,10 +181,11 @@ function http_response_headers_get_rules() {
         if ($path != $_GET['q']) {
           $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
         }
-        // When $rule->visibility has a value of 0 (HTTP_HEADER_VISIBILITY_NOTLISTED),
-        // the header is set on all pages except those listed in $rule->pages.
-        // When set to 1 (HTTP_HEADER_VISIBILITY_LISTED), it is set only on those
-        // pages listed in $rule->pages.
+        // When $rule->visibility has a value of 0
+        // (HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED),the header is set on
+        // all pages except those listed in $rule->pages.
+        // When set to 1 (HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED), it is set
+        // only on those pages listed in $rule->pages.
         $page_match = !($rule->visibility xor $page_match);
       }
       else {
@@ -264,10 +265,12 @@ function http_response_headers_rebuild() {
 /**
  * Builds and returns the list of available HTTP header rules.
  *
- * The list of rules is built by header rules in the {http_response_headers} table.
+ * The list of rules is built by header rules in the {http_response_headers}
+ * table.
  *
  * @param bool $rebuild
- *  TRUE to rebuild node types. Equivalent to calling http_response_headers_rebuild().
+ *  TRUE to rebuild node types. Equivalent to calling
+ *  http_response_headers_rebuild().
  *
  * @return DatabaseStatementInterface|null
  *   An object
@@ -322,8 +325,10 @@ function http_response_headers_get_header_callbacks() {
  * Process callback for expires header.
  *
  * @param int $seconds
+ *   Number of seconds to expire header.
  *
  * @return string
+ *   String of formatted date time.
  */
 function http_response_headers_expires_callback($seconds = 0) {
   return gmdate(DATE_RFC1123, strtotime("+ $seconds seconds"));
@@ -333,8 +338,10 @@ function http_response_headers_expires_callback($seconds = 0) {
  * Process callback for last modified header.
  *
  * @param int $seconds
+ *   Number of seconds to modified header.
  *
  * @return string
+ *   String of formatted date time.
  */
 function http_response_headers_last_modified_callback($seconds = 0) {
   return gmdate(DATE_RFC1123, strtotime("+ $seconds seconds"));

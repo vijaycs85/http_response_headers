@@ -5,7 +5,6 @@
  * Admin page callbacks for the HTTP response headers module.
  */
 
-
 function http_response_headers_manage() {
   $row = array();
   $build = array();
@@ -13,7 +12,6 @@ function http_response_headers_manage() {
     array('data' => t('Name'), 'field' => 'name'),
     array('data' => t('Header'), 'field' => 'header'),
     array('data' => t('Header value')),
-    array('data' => t('Visibility')),
     array('data' => t('Operations'), 'colspan' => '2')
   );
   $query = db_select('http_response_headers')->extend('PagerDefault')
@@ -29,9 +27,8 @@ function http_response_headers_manage() {
       array('data' => $rule->name),
       array('data' => $rule->header),
       array('data' => check_plain($rule->header_value)),
-      array('data' => http_response_headers_format_visibility($rule)),
       array('data' => l(t('configure'), "admin/config/system/http-response-headers/$rule->rule_id/configure")),
-      array('data' => l(t('delete'), "admin/config/system/http-response-headers/$rule->rule_id/delete"))
+      array('data' => l(t('delete'), "admin/config/system/http-response-headers/$rule->rule_id/delete")),
     );
   }
 
@@ -40,12 +37,12 @@ function http_response_headers_manage() {
     if (!empty($pager)) {
       $row[] = array(array('data' => $pager, 'colspan' => '3'));
     }
-    $build['system_actions_header'] = array('#markup' => '<h3>' . t('Available actions:') . '</h3>');
+    $build['system_actions_header'] = array('#markup' => '<h3>' . t('Available header rules:') . '</h3>');
     $build['system_actions_table'] = array(
       '#markup' => theme('table', array(
         'header' => $header,
         'rows' => $row
-      ))
+      )),
     );
   }
 
@@ -98,7 +95,7 @@ function http_response_headers_add_form_submit($form, &$form_state) {
       'visibility' => (int) $form_state['values']['visibility'],
       'pages' => trim($form_state['values']['pages']),
       'types' => implode(',', array_filter($form_state['values']['types'])),
-      'roles' => implode(',', array_filter($form_state['values']['roles']))
+      'roles' => implode(',', array_filter($form_state['values']['roles'])),
     ))
     ->execute();
   drupal_set_message(t('The header rule has been created.'));
@@ -171,8 +168,8 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
   );
 
   $options = array(
-    HTTP_HEADER_VISIBILITY_NOTLISTED => t('All pages except those listed'),
-    HTTP_HEADER_VISIBILITY_LISTED => t('Only the listed pages'),
+    HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED => t('All pages except those listed'),
+    HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED => t('Only the listed pages'),
   );
   $description = t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array(
     '%blog' => 'blog',
@@ -184,7 +181,7 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
     '#type' => 'radios',
     '#title' => t('Set header on specific pages'),
     '#options' => $options,
-    '#default_value' => isset($rule->visibility) ? $rule->visibility : HTTP_HEADER_VISIBILITY_NOTLISTED,
+    '#default_value' => isset($rule->visibility) ? $rule->visibility : HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED,
   );
   $form['visibility']['path']['pages'] = array(
     '#type' => 'textarea',
@@ -245,7 +242,6 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
   return $form;
 }
 
-
 /**
  * Form submission handler for http_response_headers_admin_configure().
  *
@@ -272,7 +268,6 @@ function http_response_headers_configure_submit($form, &$form_state) {
     $form_state['redirect'] = 'admin/config/system/http-response-headers';
   }
 }
-
 
 /**
  * Menu callback; delete a single header rule.
@@ -307,7 +302,9 @@ function http_response_headers_delete_confirm_submit($form, &$form_state) {
   return;
 }
 
-
+/**
+ * Callback for configuration form.
+ */
 function http_response_headers_settings_form($form, &$from_state) {
   $form['http_response_headers']['http_response_headers_allowed_headers'] = array(
     '#type' => 'select',
@@ -341,6 +338,7 @@ function http_response_headers_settings_form($form, &$from_state) {
  * Provides response headers.
  *
  * @return array
+ *   An array of response headers.
  */
 function http_response_headers_get_all_headers() {
 
@@ -401,28 +399,4 @@ function http_response_headers_get_all_headers() {
   }
 
   return $return_list;
-}
-
-/**
- * Provides formatted visibility text.
- *
- * @param object $rule
- *
- * @return string.
- */
-function http_response_headers_format_visibility($rule) {
-  $items = array();
-
-  if (!empty($rule->pages)) {
-    $visibility = ($rule->visibility) ? 'Only on ' : 'Not on ';
-    $items['pages'] =  $visibility . 'page(s): ' . check_plain($rule->pages);
-  }
-  if (!empty($rule->types)) {
-    $items['types'] = 'Content types: ' . $rule->types;
-  }
-  if (!empty($rule->roles)) {
-    $items['types'] = 'Content types: ' . $rule->roles;
-  }
-
-  return theme('item_list', array('items' => array_filter($items)));
 }
