@@ -5,6 +5,9 @@
  * Admin page callbacks for the HTTP response headers module.
  */
 
+/**
+ * Page callback for headers manage page.
+ */
 function http_response_headers_manage() {
   $row = array();
   $build = array();
@@ -12,7 +15,7 @@ function http_response_headers_manage() {
     array('data' => t('Name'), 'field' => 'name'),
     array('data' => t('Header'), 'field' => 'header'),
     array('data' => t('Header value')),
-    array('data' => t('Operations'), 'colspan' => '2')
+    array('data' => t('Operations'), 'colspan' => '2'),
   );
   $query = db_select('http_response_headers')->extend('PagerDefault')
     ->extend('TableSort');
@@ -41,7 +44,7 @@ function http_response_headers_manage() {
     $build['system_actions_table'] = array(
       '#markup' => theme('table', array(
         'header' => $header,
-        'rows' => $row
+        'rows' => $row,
       )),
     );
   }
@@ -51,7 +54,6 @@ function http_response_headers_manage() {
 
 /**
  * Form definition for http_response_headers_add_form().
- *
  */
 function http_response_headers_add_form($form, &$form_state) {
   return http_response_headers_configure($form, $form_state, NULL);
@@ -85,7 +87,7 @@ function http_response_headers_add_form_submit($form, &$form_state) {
       'visibility',
       'pages',
       'types',
-      'roles'
+      'roles',
     ))
     ->values(array(
       'rule_id' => trim(check_plain($form_state['values']['rule_id'])),
@@ -134,7 +136,7 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
     '#default_value' => isset($rule->header) ? $rule->header : '',
     '#options' => variable_get('http_response_headers_allowed_headers', array()),
     '#empty_option' => t('Select a header'),
-    '#required' => TRUE
+    '#required' => TRUE,
   );
   $form['settings']['header_value'] = array(
     '#type' => 'textfield',
@@ -142,7 +144,7 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
     '#maxlength' => 64,
     '#description' => '',
     '#default_value' => isset($rule->header_value) ? $rule->header_value : '',
-    '#required' => TRUE
+    '#required' => TRUE,
   );
 
   // Visibility settings.
@@ -174,7 +176,7 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
   $description = t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array(
     '%blog' => 'blog',
     '%blog-wildcard' => 'blog/*',
-    '%front' => '<front>'
+    '%front' => '<front>',
   ));
 
   $form['visibility']['path']['visibility'] = array(
@@ -244,8 +246,6 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
 
 /**
  * Form submission handler for http_response_headers_admin_configure().
- *
- *
  */
 function http_response_headers_configure_submit($form, &$form_state) {
   if (!form_get_errors()) {
@@ -256,7 +256,7 @@ function http_response_headers_configure_submit($form, &$form_state) {
         'visibility' => (int) $form_state['values']['visibility'],
         'pages' => trim($form_state['values']['pages']),
         'types' => implode(',', array_filter($form_state['values']['types'])),
-        'roles' => implode(',', array_filter($form_state['values']['roles']))
+        'roles' => implode(',', array_filter($form_state['values']['roles'])),
       ))
       ->condition('rule_id', $form_state['values']['rule_id'])
       ->execute();
@@ -299,7 +299,6 @@ function http_response_headers_delete_confirm_submit($form, &$form_state) {
   http_response_headers_rebuild();
 
   $form_state['redirect'] = 'admin/config/system/http-response-headers';
-  return;
 }
 
 /**
@@ -320,14 +319,13 @@ function http_response_headers_settings_form($form, &$from_state) {
     '#title' => t('Exclude header rule pages'),
     '#rows' => '5',
     '#description' => t('Excludes header rule check on this pages.'),
-    ''
   );
 
   $form['http_response_headers']['label'] = array(
     '#type' => 'markup',
     '#markup' => theme('item_list', array(
       'items' => variable_get('http_response_headers_allowed_headers', array()),
-      'title' => t('Currently enabled headers:')
+      'title' => t('Currently enabled headers:'),
     )),
   );
 
