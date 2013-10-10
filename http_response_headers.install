@@ -32,7 +32,7 @@ function http_response_headers_schema() {
       ),
       'header_value' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 64,
         'not null' => FALSE,
         'description' => "The HTTP header value;",
       ),
@@ -44,7 +44,7 @@ function http_response_headers_schema() {
       ),
       'pages' => array(
         'type' => 'text',
-        'not null' => FALSE,
+        'not null' => TRUE,
         'description' => 'Contains a list of paths on which to include/exclude the rule, depending on "visibility" setting.',
       ),
       'types' => array(
@@ -62,7 +62,7 @@ function http_response_headers_schema() {
     ),
     'primary key' => array('rule_id'),
     'indexes' => array(
-      'list' => array('rule_id', 'name', 'header', 'header_value', 'visibility', 'pages', 'types', 'roles'),
+      'list' => array('rule_id', 'name'),
     ),
   );
 

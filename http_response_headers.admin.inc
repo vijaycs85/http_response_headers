@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Admin page callbacks for the HTTP headers customisation module.
+ * Admin page callbacks for the HTTP response headers module.
  */
 
 
-function http_response_headers_list() {
+function http_response_headers_manage() {
   $row = array();
   $build = array();
   $header = array(
@@ -30,8 +30,8 @@ function http_response_headers_list() {
       array('data' => $rule->header),
       array('data' => check_plain($rule->header_value)),
       array('data' => http_response_headers_format_visibility($rule)),
-      array('data' => l(t('configure'), "admin/config/http-headers-customisation/$rule->rule_id/configure")),
-      array('data' => l(t('delete'), "admin/config/http-headers-customisation/$rule->rule_id/delete"))
+      array('data' => l(t('configure'), "admin/config/system/http-response-headers/$rule->rule_id/configure")),
+      array('data' => l(t('delete'), "admin/config/system/http-response-headers/$rule->rule_id/delete"))
     );
   }
 
@@ -102,20 +102,19 @@ function http_response_headers_add_form_submit($form, &$form_state) {
     ))
     ->execute();
   drupal_set_message(t('The header rule has been created.'));
-  $form_state['redirect'] = 'admin/config/http-headers-customisation';
+  $form_state['redirect'] = 'admin/config/system/http-response-headers';
 }
 
 /**
- * Menu callback for admin/config/http-headers-customisation/%.
+ * Menu callback for admin/config/system/http-response-headers/%.
  */
-function http_response_headers_configure($form, &$form_state, $rid = NULL) {
-  $rule = http_response_headers_load($rid);
-
+function http_response_headers_configure($form, &$form_state, $rule = NULL) {
   $form['name'] = array(
     '#title' => t('Name'),
     '#type' => 'textfield',
     '#default_value' => isset($rule->name) ? $rule->name : '',
     '#description' => t('The human-readable name of this rule. It is recommended that this name begin with a capital letter and contain only letters, numbers, and spaces. This name must be unique.'),
+    '#disabled' => isset($rule->rule_id) ? TRUE : FALSE,
     '#required' => TRUE,
     '#size' => 30,
   );
@@ -124,7 +123,7 @@ function http_response_headers_configure($form, &$form_state, $rid = NULL) {
     '#type' => 'machine_name',
     '#default_value' => isset($rule->rule_id) ? $rule->rule_id : '',
     '#maxlength' => 32,
-    '#disabled' => FALSE,
+    '#disabled' => isset($rule->rule_id) ? TRUE : FALSE,
     '#machine_name' => array(
       'exists' => 'http_response_headers_load',
     ),
@@ -270,7 +269,7 @@ function http_response_headers_configure_submit($form, &$form_state) {
     // Clear the header rules cache.
     http_response_headers_cache_reset();
 
-    $form_state['redirect'] = 'admin/config/http-headers-customisation';
+    $form_state['redirect'] = 'admin/config/system/http-response-headers';
   }
 }
 
@@ -287,7 +286,7 @@ function http_response_headers_delete_confirm($form, &$form_state, $rule) {
   $message = t('Are you sure you want to delete the header rule %type?', array('%type' => $rule->name));
   $caption = '<p>' . t('This action cannot be undone.') . '</p>';
 
-  return confirm_form($form, $message, 'admin/structure/types', $caption, t('Delete'));
+  return confirm_form($form, $message, 'admin/config/system/http-response-headers', $caption, t('Delete'));
 }
 
 /**
@@ -304,7 +303,7 @@ function http_response_headers_delete_confirm_submit($form, &$form_state) {
 
   http_response_headers_rebuild();
 
-  $form_state['redirect'] = 'admin/config/http-headers-customisation';
+  $form_state['redirect'] = 'admin/config/system/http-response-headers';
   return;
 }
 
@@ -317,8 +316,16 @@ function http_response_headers_settings_form($form, &$from_state) {
     '#options' => http_response_headers_get_all_headers(),
     '#multiple' => TRUE,
     '#size' => 10,
-    '#description' => t('This page is displayed when no other content matches the requested document. Leave blank to display a generic "page not found" page.'),
+    '#description' => t('Allowed headers to set via admin UI on <a href="!header_rule_url"> HTTP response headers page</a> page.', array('!header_rule_url' => 'admin/config/system/http-response-headers')),
   );
+  $form['http_response_headers']['http_response_headers_exclude_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Exclude header rule pages'),
+    '#rows' => '5',
+    '#description' => t('Excludes header rule check on this pages.'),
+    ''
+  );
+
   $form['http_response_headers']['label'] = array(
     '#type' => 'markup',
     '#markup' => theme('item_list', array(

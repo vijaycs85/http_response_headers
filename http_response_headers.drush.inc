@@ -2,7 +2,7 @@
 
 /**
  * @file
- *   HTTP headers customisation drush command.
+ *   HTTP response headers drush command.
  */
 
 /**

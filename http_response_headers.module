@@ -27,16 +27,110 @@ function http_response_headers_init() {
   foreach ($rules as $rule) {
     $header_value = $rule->header_value;
 
+    // @TODO: Find a way to callback on creating or editing of rule.
     // Process data with callback, if exist.
     if (isset($callbacks[$rule->header]) && $callback = $callbacks[$rule->header]) {
       if (function_exists($callback)) {
         $header_value = call_user_func_array($callback, array($rule->header_value));
       }
-
     }
+
     drupal_add_http_header($rule->header, $header_value);
   }
 }
+
+/**
+ * Implements hook_menu().
+ */
+
+function http_response_headers_menu() {
+
+  $items['admin/config/system/http-response-headers'] = array(
+    'title' => 'HTTP response headers',
+    'description' => 'Manage the header rules defined for your site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_manage'),
+    'access arguments' => array('administer http response headers'),
+    'file' => 'http_response_headers.admin.inc',
+  );
+  $items['admin/config/system/http-response-headers/manage'] = array(
+    'title' => 'List',
+    'description' => 'Manage the header rules defined for your site.',
+    'page callback' => 'http_response_headers_manage',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  $items['admin/config/system/http-response-headers/add'] = array(
+    'title' => 'Add a HTTP header rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_add_form'),
+    'access arguments' => array('administer http response headers'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  $items['admin/config/system/http-response-headers/%http_response_headers/configure'] = array(
+    'title' => 'Configure HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_configure', 4),
+    'access arguments' => array('administer http response headers'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  $items['admin/config/system/http-response-headers/%http_response_headers/delete'] = array(
+    'title' => 'Delete HTTP headers rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_delete_confirm', 4),
+    'access arguments' => array('administer http response headers'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'http_response_headers.admin.inc',
+  );
+  $items['admin/config/system/http-response-headers/settings'] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('http_response_headers_settings_form'),
+    'access arguments' => array('administer http response headers'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'http_response_headers.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function http_response_headers_permission() {
+  return array(
+    'administer http response headers' => array(
+      'title' => t('Administer HTTP response headers'),
+    ),
+    'Add http response headers' => array(
+      'title' => t('Add HTTP response headers'),
+    ),
+  );
+}
+
+/**
+ * Loads a HTTP header rule  object from the database.
+ *
+ * @param $rid
+ *   ID of the rule to load.
+ *
+ * @return stdClass
+ *   A header rule object.
+ */
+function http_response_headers_load($rid = NULL) {
+  if (!empty($rid)) {
+    return db_query('SELECT * FROM {http_response_headers} WHERE rule_id = :rule_id', array(':rule_id' => $rid))->fetchObject();
+  }
+
+  return NULL;
+
+}
+
 
 /**
  * Provides applicable rules for current page.
@@ -143,91 +237,6 @@ function http_response_headers_get_rules() {
 }
 
 /**
- * Implements hook_menu().
- */
-
-function http_response_headers_menu() {
-
-  $items['admin/config/http-headers-customisation'] = array(
-    'title' => 'HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_list'),
-    'access arguments' => array('administer http headers customisation'),
-    'file' => 'http_response_headers.admin.inc',
-  );
-  $items['admin/config/http-headers-customisation/list'] = array(
-    'title' => 'List',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  $items['admin/config/http-headers-customisation/add'] = array(
-    'title' => 'Add HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_add_form'),
-    'access arguments' => array('administer http headers customisation'),
-    'type' => MENU_LOCAL_ACTION,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  $items['admin/config/http-headers-customisation/%/configure'] = array(
-    'title' => 'Configure HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_configure', 3),
-    'access arguments' => array('administer http headers customisation'),
-    'type' => MENU_CALLBACK,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  $items['admin/config/http-headers-customisation/%http_response_headers/delete'] = array(
-    'title' => 'Delete HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_delete_confirm', 3),
-    'access arguments' => array('administer http headers customisation'),
-    'type' => MENU_CALLBACK,
-    'file' => 'http_response_headers.admin.inc',
-  );
-  $items['admin/config/http-headers-customisation/settings'] = array(
-    'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_settings_form'),
-    'access arguments' => array('administer http headers customisation'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function http_response_headers_permission() {
-  return array(
-    'administer http headers customisation' => array(
-      'title' => t('Administer HTTP headers customisation'),
-    ),
-  );
-}
-
-/**
- * Loads a HTTP header rule  object from the database.
- *
- * @param $rid
- *   ID of the rule to load.
- *
- * @return stdClass
- *   A header rule object.
- */
-function http_response_headers_load($rid = NULL) {
-  if (!empty($rid)) {
-    return db_query('SELECT * FROM {http_response_headers} WHERE rule_id = :rule_id', array(':rule_id' => $rid))->fetchObject();
-  }
-
-  return NULL;
-
-}
-
-/**
  * Callback to delete a header rule.
  *
  * @param $rid
@@ -293,6 +302,8 @@ function http_response_headers_cache_reset() {
   cache_clear_all('http_response_headers:', 'cache', TRUE);
   drupal_static_reset('_http_response_headers_rebuild');
 }
+
+
 
 /**
  * Provides process callback for headers.
