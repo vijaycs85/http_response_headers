@@ -2,13 +2,12 @@
 
 /**
  * @file
- *   HTTP response headers drush command.
+ * HTTP response headers drush command.
  */
 
 /**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
-
 function http_response_headers_drush_command() {
   $items = array();
 
@@ -17,8 +16,8 @@ function http_response_headers_drush_command() {
     'description' => "Creates new HTTP header rule",
     'arguments' => array(
       'name' => 'The machine name of the header rule.',
-      'header' => '',
-      'header_value' => ''
+      'header' => 'The HTTP header.',
+      'header_value' => 'Value of the header.',
     ),
     'options' => array(
       'path' => array(
