@@ -17,15 +17,9 @@ function http_response_headers_manage() {
     array('data' => t('Header value')),
     array('data' => t('Operations'), 'colspan' => '2'),
   );
-  $query = db_select('http_response_headers')->extend('PagerDefault')
-    ->extend('TableSort');
-  $result = $query
-    ->fields('http_response_headers')
-    ->limit(50)
-    ->orderByHeader($header)
-    ->execute();
+  $rules = http_response_headers_list($header);
 
-  foreach ($result as $rule) {
+  foreach ($rules as $rule) {
     $row[] = array(
       array('data' => $rule->name),
       array('data' => $rule->header),
@@ -40,8 +34,8 @@ function http_response_headers_manage() {
     if (!empty($pager)) {
       $row[] = array(array('data' => $pager, 'colspan' => '3'));
     }
-    $build['system_actions_header'] = array('#markup' => '<h3>' . t('Available header rules:') . '</h3>');
-    $build['system_actions_table'] = array(
+    $build['header_rules_title'] = array('#markup' => '<h3>' . t('Available header rules:') . '</h3>');
+    $build['header_rules_table'] = array(
       '#markup' => theme('table', array(
         'header' => $header,
         'rows' => $row,

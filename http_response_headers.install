@@ -68,3 +68,12 @@ function http_response_headers_schema() {
 
   return $schema;
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function http_response_headers_uninstall() {
+  // Remove variables created.
+  variable_del('http_response_headers_allowed_headers');
+  variable_del('http_response_headers_exclude_pages');
+}

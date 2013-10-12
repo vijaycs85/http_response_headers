@@ -39,6 +39,30 @@ function http_response_headers_init() {
 }
 
 /**
+ * Implements hook_help().
+ */
+function http_response_headers_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#http_response_headers':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The HTTP response headers module allows you to create header rules, which are rendered to one or more pages of a website. The <a href="@http_response_headers">HTTP response header administration page</a> provides an interface to manage header rules.', array('@http_response_headers' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Configure HTTP headers') . '</dt>';
+      $output .= '<dd>' . t('Users with the <em>Administer blocks</em> permission can configure the list of allowed headers to create rules. Headers list can be configured from <a href="@header-config">HTTP response header settings page</a>.', array('@header-config' => url('admin/config/system/http-response-headers/settings'))) . '</dd>';
+      $output .= '<dt>' . t('Creating header rules') . '</dt>';
+      $output .= '<dd>' . t('Users with the <em>administer http response headers</em> permission can <a href="@header-add">add header rules</a>, which are then listed on the <a href="@header-list">HTTP response headers administration page</a>.', array('@header-list' => url('admin/config/system/http-response-headers'), '@header-add' => url('admin/config/system/http-response-headers/add'))) . '</dd>';
+      $output .= '<dt>' . t('Controlling visibility') . '</dt>';
+      $output .= '<dd>' . t('Header rules can be configured to be applied only on certain pages, only to users of certain roles, or only on pages displaying certain <a href="@content-type">content types</a>.', array('@content-type' => url('admin/structure/types'), '@user' => url('user'))) . '</dd>';
+      $output .= '</dl>';
+      return $output;
+    case 'admin/config/system/http-response-headers':
+      return '<p>' . t('The allowed headers can be configured from  <a href="@header_url">configuration</a>', array('@header_url' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function http_response_headers_menu() {
@@ -129,6 +153,27 @@ function http_response_headers_load($rid = NULL) {
 
 }
 
+/**
+ * Loads all header rules.
+ *
+ * @param array $order_by_headers
+ *   An array of headers with order details.
+ *
+ * @return mixed
+ *   A query result object.
+ */
+function http_response_headers_list($order_by_headers = array()) {
+  $query = db_select('http_response_headers')->extend('PagerDefault')
+    ->extend('TableSort')
+    ->fields('http_response_headers')
+    ->limit(50);
+
+  if (!empty($order_by_headers)) {
+    $query->orderByHeader($order_by_headers);
+  }
+
+  return $query->execute();
+}
 
 /**
  * Provides applicable rules for current page.
