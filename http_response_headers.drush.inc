@@ -227,9 +227,6 @@ function drush_http_response_headers_http_header_set($rule_id) {
  *
  * @param string $rule_id
  *   A string rule ID.
- *
- * @return string mixed
- *   A string error message, if invalid rule ID.
  */
 function drush_http_response_headers_http_header_get_validate($rule_id) {
   if (!http_response_headers_load($rule_id)) {

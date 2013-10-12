@@ -161,6 +161,7 @@ function http_response_headers_load($rid = NULL) {
  *   An array of fields with field and value.
  *
  * @return DatabaseStatementInterface|int|null
+ *   An object of database insert.
  */
 function http_response_headers_add($fields) {
   return db_insert('http_response_headers')
