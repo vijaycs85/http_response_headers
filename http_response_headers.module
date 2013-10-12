@@ -57,6 +57,7 @@ function http_response_headers_help($path, $arg) {
       $output .= '<dd>' . t('Header rules can be configured to be applied only on certain pages, only to users of certain roles, or only on pages displaying certain <a href="@content-type">content types</a>.', array('@content-type' => url('admin/structure/types'), '@user' => url('user'))) . '</dd>';
       $output .= '</dl>';
       return $output;
+
     case 'admin/config/system/http-response-headers':
       return '<p>' . t('The allowed headers can be configured from  <a href="@header_url">configuration</a>', array('@header_url' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
   }
@@ -151,6 +152,20 @@ function http_response_headers_load($rid = NULL) {
 
   return NULL;
 
+}
+
+/**
+ * Adds new header rule.
+ *
+ * @param array $fields
+ *   An array of fields with field and value.
+ *
+ * @return DatabaseStatementInterface|int|null
+ */
+function http_response_headers_add($fields) {
+  return db_insert('http_response_headers')
+    ->fields($fields)
+    ->execute();
 }
 
 /**
@@ -279,6 +294,24 @@ function http_response_headers_get_rules() {
   }
 
   return $rules;
+}
+
+/**
+ * Updates the rule details.
+ *
+ * @param string $rule_id
+ *   A string rule ID.
+ * @param array $fields
+ *   An associative array of field details.
+ *
+ * @return UpdateQuery
+ *   A new UpdateQuery object.
+ */
+function http_response_headers_update($rule_id, $fields = array()) {
+  return db_update('http_response_headers')
+    ->fields($fields)
+    ->condition('rule_id', $rule_id)
+    ->execute();
 }
 
 /**

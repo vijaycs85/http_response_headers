@@ -72,28 +72,18 @@ function http_response_headers_add_form_validate($form, &$form_state) {
  * Saves the new HTTP header rule.
  */
 function http_response_headers_add_form_submit($form, &$form_state) {
-  db_insert('http_response_headers')
-    ->fields(array(
-      'rule_id',
-      'name',
-      'header',
-      'header_value',
-      'visibility',
-      'pages',
-      'types',
-      'roles',
-    ))
-    ->values(array(
-      'rule_id' => trim(check_plain($form_state['values']['rule_id'])),
-      'name' => trim(check_plain($form_state['values']['name'])),
-      'header' => trim($form_state['values']['header']),
-      'header_value' => trim($form_state['values']['header_value']),
-      'visibility' => (int) $form_state['values']['visibility'],
-      'pages' => trim($form_state['values']['pages']),
-      'types' => implode(',', array_filter($form_state['values']['types'])),
-      'roles' => implode(',', array_filter($form_state['values']['roles'])),
-    ))
-    ->execute();
+  $fields = array(
+    'rule_id' => trim(check_plain($form_state['values']['rule_id'])),
+    'name' => trim(check_plain($form_state['values']['name'])),
+    'header' => trim($form_state['values']['header']),
+    'header_value' => trim($form_state['values']['header_value']),
+    'visibility' => (int) $form_state['values']['visibility'],
+    'pages' => trim($form_state['values']['pages']),
+    'types' => implode(',', array_filter($form_state['values']['types'])),
+    'roles' => implode(',', array_filter($form_state['values']['roles'])),
+  );
+  http_response_header_add($fields);
+
   drupal_set_message(t('The header rule has been created.'));
   $form_state['redirect'] = 'admin/config/system/http-response-headers';
 }
@@ -102,6 +92,7 @@ function http_response_headers_add_form_submit($form, &$form_state) {
  * Menu callback for admin/config/system/http-response-headers/%.
  */
 function http_response_headers_configure($form, &$form_state, $rule = NULL) {
+
   $form['name'] = array(
     '#title' => t('Name'),
     '#type' => 'textfield',
@@ -111,7 +102,6 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
     '#required' => TRUE,
     '#size' => 30,
   );
-
   $form['rule_id'] = array(
     '#type' => 'machine_name',
     '#default_value' => isset($rule->rule_id) ? $rule->rule_id : '',
@@ -122,7 +112,6 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
     ),
     '#description' => t('A unique machine-readable name for this rule. It must only contain lowercase letters, numbers, and underscores.'),
   );
-
   $form['settings']['header'] = array(
     '#type' => 'select',
     '#title' => t('HTTP header'),
@@ -243,17 +232,16 @@ function http_response_headers_configure($form, &$form_state, $rule = NULL) {
  */
 function http_response_headers_configure_submit($form, &$form_state) {
   if (!form_get_errors()) {
-    db_update('http_response_headers')
-      ->fields(array(
-        'header' => trim($form_state['values']['header']),
-        'header_value' => trim($form_state['values']['header_value']),
-        'visibility' => (int) $form_state['values']['visibility'],
-        'pages' => trim($form_state['values']['pages']),
-        'types' => implode(',', array_filter($form_state['values']['types'])),
-        'roles' => implode(',', array_filter($form_state['values']['roles'])),
-      ))
-      ->condition('rule_id', $form_state['values']['rule_id'])
-      ->execute();
+    $form_values = $form_state['values'];
+    $fields = array(
+      'header' => trim($form_state['values']['header']),
+      'header_value' => trim($form_state['values']['header_value']),
+      'visibility' => (int) $form_state['values']['visibility'],
+      'pages' => trim($form_state['values']['pages']),
+      'types' => implode(',', array_filter($form_state['values']['types'])),
+      'roles' => implode(',', array_filter($form_state['values']['roles'])),
+    );
+    http_response_headers_update($form_values['rule_id'], $fields);
     drupal_set_message(t('The header rule configuration has been saved.'));
 
     // Clear the header rules cache.
