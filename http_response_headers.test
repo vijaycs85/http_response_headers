@@ -5,9 +5,12 @@
  * Tests for http_response_headers.module.
  */
 
-class HttpResponseHeaderTestCase extends DrupalWebTestCase {
-  protected $admin_user;
+class HttpResponseHeadersTestCase extends DrupalWebTestCase {
+  protected $adminUser;
 
+  /**
+   * @return array
+   */
   public static function getInfo() {
     return array(
       'name' => 'Http Response Header functionality',
@@ -16,20 +19,26 @@ class HttpResponseHeaderTestCase extends DrupalWebTestCase {
     );
   }
 
+  /**
+   * @return bool|void
+   */
   function setUp() {
     parent::setUp('http_response_headers');
 
     // Create and log in an administrative user.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->adminUser = $this->drupalCreateUser(array(
       'administer http response headers',
       'access administration pages',
     ));
-    $this->drupalLogin($this->admin_user);
+    $this->drupalLogin($this->adminUser);
 
     // Set up default header list on configuration page.
     $this->setupDefaultConfiguration();
   }
 
+  /**
+   *
+   */
   protected function setupDefaultConfiguration() {
     $edit['http_response_headers_allowed_headers[]'] = array (
       'Cache-Control' => 'Cache-Control',
@@ -50,7 +59,8 @@ class HttpResponseHeaderTestCase extends DrupalWebTestCase {
     $this->assertRaw(l('Add a HTTP header rule', 'admin/config/system/http-response-headers/add'), 'Add header rule link is present on overview page.');
 
 
-    // Add a new header rule by filling out the input form on the admin/config/system/http-response-headers/add page.
+    // Add a new header rule by filling out the input
+    // form on the admin/config/system/http-response-headers/add page.
     $header_rule['name'] = $this->randomName(8);
     $header_rule['rule_id'] = strtolower($header_rule['name']);
     $header_rule['header'] = 'Cache-Control';
@@ -60,14 +70,17 @@ class HttpResponseHeaderTestCase extends DrupalWebTestCase {
     $header_rule['types[article]'] = 'article';
     $this->drupalPost('admin/config/system/http-response-headers/add', $header_rule, t('Save rule'));
 
-    // Confirm that the header rule has been created, and then query the created rule_id.
+    // Confirm that the header rule has been created, and then
+    // query the created rule_id.
     $this->assertText(t('The header rule has been created.'), 'Header rule successfully created.');
     $rule_id = db_query("SELECT rule_id FROM {http_response_headers} WHERE name = :name", array(':name' => $header_rule['name']))->fetchField();
 
-    // Check to see if the header rule was created by checking that it's in the database.
+    // Check to see if the header rule was created by checking
+    // that it's in the database.
     $this->assertNotNull($rule_id, 'Header rule found in database');
 
-    // Check that http_response_headers_load() returns the correct name and content.
+    // Check that http_response_headers_load() returns
+    // the correct name and content.
     $data = http_response_headers_load($rule_id);
     $this->assertEqual($header_rule['header_value'], $data->header_value, 'http_response_headers_load() provides correct header details.');
 
@@ -78,10 +91,11 @@ class HttpResponseHeaderTestCase extends DrupalWebTestCase {
 
     // Set visibility only for authenticated users, to verify delete functionality.
     $edit = array();
-    $edit['roles[' . DRUPAL_AUTHENTICATED_RID .']'] = TRUE;
+    $edit['roles[' . DRUPAL_AUTHENTICATED_RID . ']'] = TRUE;
     $this->drupalPost('admin/config/system/http-response-headers/' . $rule_id . '/configure', $edit, t('Save rule'));
 
-    // Delete the created header rule  & verify that it's been deleted and no longer applying on the page.
+    // Delete the created header rule  & verify that it's been deleted
+    // and no longer applying on the page.
     $this->clickLink(t('delete'));
     $this->drupalPost('admin/config/system/http-response-headers/' . $rule_id . '/delete', array(), t('Delete'));
     $this->assertRaw(t('The header rule %name has been deleted.', array('%name' => $header_rule['name'])), 'Header rule successfully deleted.');
