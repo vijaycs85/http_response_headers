@@ -25,7 +25,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   /**
    * Sets up test environment.
    */
-  function setUp() {
+  protected function setUp() {
     parent::setUp('http_response_headers');
 
     // Create and log in an administrative user.
@@ -42,12 +42,11 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   /**
    * Test creating header rule.
    */
-  function testHeaderRuleAdminUI() {
+  public function testHeaderRuleAdminUI() {
 
     // Confirm that the add rule link appears on header rule overview pages.
     $this->drupalGet('admin/config/system/http-response-headers');
-    $this->assertRaw(l('Add a HTTP header rule', 'admin/config/system/http-response-headers/add'), 'Add header rule link is present on overview page.');
-
+    $this->assertRaw(l(t('Add a HTTP header rule'), 'admin/config/system/http-response-headers/add'), 'Add header rule link is present on overview page.');
 
     // Add a new header rule by filling out the input
     // form on the admin/config/system/http-response-headers/add page.
@@ -58,7 +57,6 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
       'types[article]' => 'article',
     );
     $this->createHeaderRule(strtolower($name), $name, 'Cache-Control', 'max-age=3600', $visibility_options);
-
 
     // Confirm that the header rule has been created, and then
     // query the created rule_id.
@@ -96,7 +94,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   /**
    * Test header rule visibility.
    */
-  function testHeaderRuleVisibility() {
+  public function testHeaderRuleVisibility() {
     // Create a random name for the header rule.
     $name = $this->randomName(8);
     $visibility_options = array();
@@ -134,10 +132,9 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test header rule applied when using "pages" restriction but leaving
-   * "pages" textarea empty.
+   * Test header rule with empty "pages" textarea.
    */
-  function testHeaderRuleVisibilityListedEmpty() {
+  public function testHeaderRuleVisibilityListedEmpty() {
     // Create a random name for the header rule.
     $name = $this->randomName(8);
     $visibility_options = array();
@@ -171,7 +168,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   /**
    * Test header rule helpers that changes the user input.
    */
-  function testHeaderRuleHelpers() {
+  public function testHeaderRuleHelpers() {
     // Create a header rule with 'Expires' header.
     $name = $this->randomName(8);
     $visibility_options = array(
@@ -182,7 +179,8 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
     $header_value = '3600';
     $this->createHeaderRule(strtolower($name), $name, $header, $header_value, $visibility_options);
 
-    // Get user page to check Expires has 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
+    // Get user page to check Expires has
+    // 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
     $this->drupalGet('user');
     $headers = $this->drupalGetHeaders();
     $this->assertEqual($headers[strtolower($header)], http_response_headers_expires_callback($header_value), 'Expires header was applied to user pages.');
@@ -197,7 +195,8 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
     $header_value = '3600';
     $this->createHeaderRule(strtolower($name), $name, $header, $header_value, $visibility_options);
 
-    // Get user page to check Last-Modified has 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
+    // Get user page to check Last-Modified has
+    // 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
     $this->drupalGet('user');
     $headers = $this->drupalGetHeaders();
     $this->assertEqual($headers[strtolower($header)], http_response_headers_last_modified_callback($header_value), 'Last-Modified header was applied to user pages.');
@@ -208,7 +207,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
    * Setup default configuration for HTTP response headers.
    */
   protected function setupDefaultConfiguration() {
-    $edit['http_response_headers_allowed_headers[]'] = array (
+    $edit['http_response_headers_allowed_headers[]'] = array(
       'Cache-Control' => 'Cache-Control',
       'Expires' => 'Expires',
       'X-Frame-Options' => 'X-Frame-Options',
@@ -223,7 +222,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
    *
    * @param string $rule_id
    *   A string rule ID.
-   * @param $name
+   * @param string $name
    *   A string name.
    * @param string  $header
    *   A string header.
@@ -235,7 +234,7 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
    * @return string
    *   A string rule ID created.
    */
-  protected function createHeaderRule($rule_id, $name , $header, $header_value, $visibility_options = array()) {
+  protected function createHeaderRule($rule_id, $name, $header, $header_value, $visibility_options = array()) {
     $header_rule['name'] = $name;
     $header_rule['rule_id'] = $rule_id;
     $header_rule['header'] = $header;
@@ -249,12 +248,13 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
    * Deletes a rule with given rule ID.
    *
    * @param string $rule_id
+   *   A string rule ID.
    */
   protected function deleteHeaderRule($rule_id) {
     $this->drupalGet('admin/config/system/http-response-headers');
     $this->clickLink(t('delete'));
     $this->drupalPost('admin/config/system/http-response-headers/' . $rule_id . '/delete', array(), t('Delete'));
-    $this->assertNoRaw(t($rule_id), 'Header rule no longer appears on page.');
+    $this->assertNoRaw($rule_id, 'Header rule no longer appears on page.');
 
   }
 }
