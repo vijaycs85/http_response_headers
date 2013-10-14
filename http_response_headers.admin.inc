@@ -82,7 +82,7 @@ function http_response_headers_add_form_submit($form, &$form_state) {
     'types' => implode(',', array_filter($form_state['values']['types'])),
     'roles' => implode(',', array_filter($form_state['values']['roles'])),
   );
-  http_response_header_add($fields);
+  http_response_headers_add($fields);
 
   drupal_set_message(t('The header rule has been created.'));
   $form_state['redirect'] = 'admin/config/system/http-response-headers';
@@ -294,7 +294,7 @@ function http_response_headers_settings_form($form, &$from_state) {
     '#options' => http_response_headers_get_all_headers(),
     '#multiple' => TRUE,
     '#size' => 10,
-    '#description' => t('Allowed headers to set via admin UI on <a href="!header_rule_url"> HTTP response headers page</a> page.', array('!header_rule_url' => 'admin/config/system/http-response-headers')),
+    '#description' => t('Allowed headers to set via admin UI on <a href="!header_rule_url"> HTTP response headers page</a> page.', array('!header_rule_url' => url('admin/config/system/http-response-headers'))),
   );
   $form['http_response_headers']['http_response_headers_exclude_pages'] = array(
     '#type' => 'textarea',

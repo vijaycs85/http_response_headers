@@ -1,4 +1,5 @@
 name = HTTP Response Headers
 description = Allows to customize HTTP response headers.
 core = 7.x
+files[] = http_response_headers.test
 configure = admin/config/system/http-response-headers/settings
