@@ -39,156 +39,135 @@ function http_response_headers_init() {
 }
 
 /**
- * Implements hook_help().
+ * Creates new object.
+ *
+ * Chaos tools export create callback for the http_response_headers table.
+ *
+ * @param $set_defaults
+ *   A boolean, passed in from Chaos tools, TRUE by default.
+ *
+ * @return Object
+ *   A HttpResponseHeaders object.
  */
-function http_response_headers_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#http_response_headers':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('The HTTP response headers module allows you to create header rules, which are rendered to one or more pages of a website. The <a href="@http_response_headers">HTTP response header administration page</a> provides an interface to manage header rules.', array('@http_response_headers' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
-      $output .= '<h3>' . t('Uses') . '</h3>';
-      $output .= '<dl>';
-      $output .= '<dt>' . t('Configure HTTP headers') . '</dt>';
-      $output .= '<dd>' . t('Users with the <em>Administer blocks</em> permission can configure the list of allowed headers to create rules. Headers list can be configured from <a href="@header-config">HTTP response header settings page</a>.', array('@header-config' => url('admin/config/system/http-response-headers/settings'))) . '</dd>';
-      $output .= '<dt>' . t('Creating header rules') . '</dt>';
-      $output .= '<dd>' . t('Users with the <em>administer http response headers</em> permission can <a href="@header-add">add header rules</a>, which are then listed on the <a href="@header-list">HTTP response headers administration page</a>.', array('@header-list' => url('admin/config/system/http-response-headers'), '@header-add' => url('admin/config/system/http-response-headers/add'))) . '</dd>';
-      $output .= '<dt>' . t('Controlling visibility') . '</dt>';
-      $output .= '<dd>' . t('Header rules can be configured to be applied only on certain pages, only to users of certain roles, or only on pages displaying certain <a href="@content-type">content types</a>.', array('@content-type' => url('admin/structure/types'), '@user' => url('user'))) . '</dd>';
-      $output .= '</dl>';
-      return $output;
-
-    case 'admin/config/system/http-response-headers':
-      return '<p>' . t('The allowed headers can be configured from  <a href="@header_url">configuration</a>', array('@header_url' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
+function http_response_headers_rule_create($set_defaults = TRUE) {
+  $rule = new HttpResponseHeadersRule;
+  if ($set_defaults) {
+    $rule->description = '';
+    $rule->header = '';
+    $rule->headerV_value = '';
+    $rule->pages = '';
+    $rule->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
+    $rule->roles = '';
+    $rule->types = '';
   }
-}
 
-/**
- * Implements hook_menu().
- */
-function http_response_headers_menu() {
-
-  $items['admin/config/system/http-response-headers'] = array(
-    'title' => 'HTTP response headers',
-    'description' => 'Manage the header rules defined for your site.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_manage'),
-    'access arguments' => array('administer http response headers'),
-    'file' => 'http_response_headers.admin.inc',
-  );
-  $items['admin/config/system/http-response-headers/manage'] = array(
-    'title' => 'List',
-    'description' => 'Manage the header rules defined for your site.',
-    'page callback' => 'http_response_headers_manage',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  $items['admin/config/system/http-response-headers/add'] = array(
-    'title' => 'Add a HTTP header rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_add_form'),
-    'access arguments' => array('administer http response headers'),
-    'type' => MENU_LOCAL_ACTION,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  $items['admin/config/system/http-response-headers/%http_response_headers/configure'] = array(
-    'title' => 'Configure HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_configure', 4),
-    'access arguments' => array('administer http response headers'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  $items['admin/config/system/http-response-headers/%http_response_headers/delete'] = array(
-    'title' => 'Delete HTTP headers rule',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_delete_confirm', 4),
-    'access arguments' => array('administer http response headers'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'http_response_headers.admin.inc',
-  );
-  $items['admin/config/system/http-response-headers/settings'] = array(
-    'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_settings_form'),
-    'access arguments' => array('administer http response headers'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'http_response_headers.admin.inc',
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function http_response_headers_permission() {
-  return array(
-    'administer http response headers' => array(
-      'title' => t('Administer HTTP response headers'),
-    ),
-    'Add http response headers' => array(
-      'title' => t('Add HTTP response headers'),
-    ),
-  );
+  return $rule;
 }
 
 /**
  * Loads a HTTP header rule  object from the database.
  *
- * @param string $rid
+ * @param string $machine_name
  *   ID of the rule to load.
+ * @param bool $reset
+ *   Flag to reset cached objects.
  *
  * @return stdClass
  *   A header rule object.
  */
-function http_response_headers_load($rid = NULL) {
-  if (!empty($rid)) {
-    return db_query('SELECT * FROM {http_response_headers} WHERE rule_id = :rule_id', array(':rule_id' => $rid))->fetchObject();
+function http_response_headers_rule_load($machine_name, $reset = FALSE) {
+  // Use CTools export API to fetch this header rule.
+  ctools_include('export');
+
+  // Reset the static cache if required
+  if ($reset) {
+    ctools_export_load_object_reset('http_response_headers');
   }
 
-  return NULL;
+  $result = ctools_export_load_object('http_response_headers', 'names', array($machine_name));
 
+  if (isset($result[$machine_name])) {
+    return $result[$machine_name];
+  }
 }
 
 /**
- * Adds new header rule.
+ * Load all header rules.
  *
- * @param array $fields
- *   An array of fields with field and value.
- *
- * @return DatabaseStatementInterface|int|null
- *   An object of database insert.
+ * @return Array
+ *   An array of HttpResponseHeadersRule objects, keyed by the machine name of
+ *   each pool.
  */
-function http_response_headers_add($fields) {
-  return db_insert('http_response_headers')
-    ->fields($fields)
+function http_response_headers_rule_load_all() {
+  // Use CTools export API to fetch this header rule.
+  ctools_include('export');
+  $result = ctools_export_load_object('http_response_headers', 'all');
+
+  return $result;
+}
+
+/**
+ * Save a single header rule to the database.
+ *
+ * @param HttpResponseHeadersRule $rule
+ *   The rule object.
+ *
+ * @return bool
+ *   TRUE or FALSE flag of save operation.
+ */
+function http_response_headers_rule_save(HttpResponseHeadersRule $rule) {
+  db_merge('http_response_headers')
+    ->key(array('machine_name' => $rule->machine_name))
+    ->fields(array(
+      'description' => $rule->description,
+      'header' => $rule->header,
+      'header_value' => $rule->header_value,
+      'pages' => $rule->pages,
+      'visibility' => $rule->visibility,
+      'types' => $rule->types,
+      'roles' => $rule->roles,
+      // Serialize the whole object into data column, this way, any classes that
+      // subclass the base object will have an opportunity to save their data
+      // too!
+      'data' => serialize($rule),
+
+    ))
     ->execute();
+
+  return TRUE;
 }
 
 /**
- * Loads all header rules.
- *
- * @param array $order_by_headers
- *   An array of headers with order details.
- *
- * @return mixed
- *   A query result object.
+ * Export a single message queue pool from the DB.
  */
-function http_response_headers_list($order_by_headers = array()) {
-  $query = db_select('http_response_headers')->extend('PagerDefault')
-    ->extend('TableSort')
-    ->fields('http_response_headers')
-    ->limit(50);
+function http_response_headers_rule_export($object, $indent = '') {
+  $output = $indent . '$header_rule = new ' . get_class($object) . '()' . ";\n";
+  $output .= $indent . '$header_rule->disabled = FALSE; /* Edit this to true to make a default pool disabled initially */' . "\n";
+  $output .= $indent . '$header_rule->api_version = 1' . ";\n";
+  $output .= $indent . '$header_rule->machine_name = "' . $object->machine_name . "\";\n";
+  $output .= $indent . '$header_rule->description = "' . $object->description . "\";\n";
+  $output .= $indent . '$header_rule->header = "' . $object->header . "\";\n";
+  $output .= $indent . '$header_rule->header_value = "' . $object->header_value . "\";\n";
+  $output .= $indent . '$header_rule->visibility =  "' . $object->visibility . "\";\n";
+  $output .= $indent . '$header_rule->pages = "' . $object->pages . "\";\n";
+  $output .= $indent . '$header_rule->types = "' . $object->types . "\";\n";
+  $output .= $indent . '$header_rule->roles =  "' .$object->roles   . "\";\n";
 
-  if (!empty($order_by_headers)) {
-    $query->orderByHeader($order_by_headers);
-  }
+  return $output;
+}
 
-  return $query->execute();
+function http_response_headers_rule_factory($schema, $data) {
+  $rule = unserialize($data->data);
+  $rule->machine_name = $data->machine_name;
+  $rule->description  = $data->description;
+  $rule->header  = $data->header;
+  $rule->header_value  = $data->header_value;
+  $rule->pages  = $data->pages;
+  $rule->visibility  = $data->visibility;
+  $rule->types  = $data->types;
+  $rule->roles  = $data->roles;
+
+  return $rule;
 }
 
 /**
@@ -204,7 +183,7 @@ function http_response_headers_get_rules() {
     ->fields('http_response_headers')
     ->execute();
 
-  $rules = $result->fetchAllAssoc('rule_id');
+  $rules = $result->fetchAllAssoc('machine_name');
 
   foreach ($rules as $key => $rule) {
 
@@ -298,32 +277,14 @@ function http_response_headers_get_rules() {
 }
 
 /**
- * Updates the rule details.
- *
- * @param string $rule_id
- *   A string rule ID.
- * @param array $fields
- *   An associative array of field details.
- *
- * @return UpdateQuery
- *   A new UpdateQuery object.
- */
-function http_response_headers_update($rule_id, $fields = array()) {
-  return db_update('http_response_headers')
-    ->fields($fields)
-    ->condition('rule_id', $rule_id)
-    ->execute();
-}
-
-/**
  * Callback to delete a header rule.
  *
- * @param string $rid
+ * @param string $machine_name
  *   A string rule ID to delete.
  */
-function http_response_headers_delete($rid) {
+function http_response_headers_rule_delete($machine_name) {
   db_delete('http_response_headers')
-    ->condition('rule_id', $rid)
+    ->condition('machine_name', $machine_name)
     ->execute();
 
   // Clear the header rules cache.
@@ -371,7 +332,7 @@ function _http_response_headers_rebuild($rebuild = FALSE) {
   $_header_rules = db_select('http_response_headers', 'h')
     ->fields('h')
     ->execute()
-    ->fetchAllAssoc('rule_id');
+    ->fetchAllAssoc('machine_name');
   cache_set($cid, $_header_rules);
 
   return $_header_rules;

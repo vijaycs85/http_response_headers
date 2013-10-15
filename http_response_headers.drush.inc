@@ -15,13 +15,12 @@ function http_response_headers_drush_command() {
   $items['http-header-add'] = array(
     'description' => 'Creates new HTTP header rule',
     'arguments' => array(
-      'rule_id' => 'The machine name rule ID) of the header rule.',
-      'name' => 'The name of the header rule.',
+      'machine_name' => 'The machine name rule ID) of the header rule.',
       'header' => 'The HTTP header.',
       'header_value' => 'Value of the header.',
     ),
     'options' => array(
-      'name' => array(
+      'description' => array(
         'description' => 'Human readable name of the header rule',
         'example-value' => 'Global cache header',
       ),
@@ -53,7 +52,7 @@ function http_response_headers_drush_command() {
   $items['http-header-set'] = array(
     'description' => 'Modify HTTP header rule',
     'arguments' => array(
-      'rule_id' => 'The machine name (rule ID) of the header rule.',
+      'machine_name' => 'The machine name (rule ID) of the header rule.',
     ),
     'options' => array(
       'visibility' => array(
@@ -84,7 +83,7 @@ function http_response_headers_drush_command() {
   $items['http-header-get'] = array(
     'description' => 'Retrieves HTTP header rule by machine name',
     'arguments' => array(
-      'name' => 'The machine name of the header rule.',
+      'machine_name' => 'The machine name of the header rule.',
     ),
     'examples' => array(
       'drush http-header-get global_expires' => 'Get the header rule with machine name global_expires',
@@ -97,7 +96,7 @@ function http_response_headers_drush_command() {
   $items['http-header-del'] = array(
     'description' => 'Delete a HTTP header rule by machine name',
     'arguments' => array(
-      'name' => 'The machine name of the header rule.',
+      'machine_name' => 'The machine name of the header rule.',
     ),
     'examples' => array(
       'drush http-header-del global_expires' => 'Delete the header rule with machine name global_expires',
@@ -123,14 +122,14 @@ function http_response_headers_drush_command() {
 /**
  * Validation callback for drush_http_response_headers_http_header_set().
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  * @param string $header
  *   A string header.
  * @param mixed $header_value
  *   Header value.
  */
-function drush_http_response_headers_http_header_add_validate($rule_id, $header, $header_value) {
+function drush_http_response_headers_http_header_add_validate($machine_name, $header, $header_value) {
   $args = func_get_args();
 
   // Should have all arguments.
@@ -144,8 +143,8 @@ function drush_http_response_headers_http_header_add_validate($rule_id, $header,
     return drush_set_error(t('@header is not a valid header. Try "drush vget http_response_headers_allowed_headers" to see list of allowed headers to create header rules.', array('@header' => $header)));
   }
 
-  if (http_response_headers_load($rule_id)) {
-    return drush_set_error(t('@rule_id is already exist!.', array('@rule_id' => $rule_id)));
+  if (http_response_headers_rule_load($machine_name)) {
+    return drush_set_error(t('@machine_name is already exist!.', array('@machine_name' => $machine_name)));
   }
 
   // Do the basic validations.
@@ -157,46 +156,42 @@ function drush_http_response_headers_http_header_add_validate($rule_id, $header,
  *
  * Update if rule id exists, create one otherwise.
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  * @param string $header
  *   A string header name.
  * @param string $header_value
  *   A string header value.
  */
-function drush_http_response_headers_http_header_add($rule_id, $header, $header_value) {
-  $name = drush_get_option('name', NULL);
+function drush_http_response_headers_http_header_add($machine_name, $header, $header_value) {
+  $description = drush_get_option('description', NULL);
   $pages = drush_get_option('pages', NULL);
-  $types_raw = drush_get_option('types', NULL);
-  $roles_raw = drush_get_option('roles', NULL);
-  $visibility = drush_get_option('visibility', NULL);
 
-  $fields = array(
-    'rule_id' => trim(check_plain($rule_id)),
-    // Use rule ID, if name is not set.
-    'name' => (isset($name)) ? trim(check_plain($name)) : trim(check_plain($rule_id)),
-    'header' => trim($header),
-    'header_value' => trim($header_value),
-    'visibility' => $visibility,
-    'pages' => trim($pages),
-    'types' => $types_raw,
-    'roles' => $roles_raw,
-  );
-  http_response_headers_add($fields);
+  $rule = new HttpResponseHeadersRule;
+  $rule->machine_name = $machine_name;
+    $rule->description = (isset($description)) ? trim(check_plain($description)) : trim(check_plain($machine_name));
+    $rule->header = trim($header);
+    $rule->headerV_value =  trim($header_value);
+    $rule->pages = trim($pages);
+    $rule->visibility = drush_get_option('visibility', 0);
+    $rule->roles = drush_get_option('roles', NULL);
+    $rule->types = drush_get_option('types', NULL);
 
-  drush_log(dt('!rule was added.', array('!rule_id' => $rule_id)));
+  http_response_headers_rule_save($rule);
+
+  drush_log(dt('!rule was added.', array('!machine_name' => $machine_name)));
 }
 
 /**
  * Validation callback for drush_http_response_headers_http_header_set().
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  */
-function drush_http_response_headers_http_header_set_validate($rule_id) {
+function drush_http_response_headers_http_header_set_validate($machine_name) {
   // Validate rule ID.
-  if (!http_response_headers_load($rule_id)) {
-    return drush_set_error(t('@rule_id is not a valid header rule', array('@rule_id' => $rule_id)));
+  if (!http_response_headers_rule_load($machine_name)) {
+    return drush_set_error(t('@machine_name is not a valid header rule', array('@machine_name' => $machine_name)));
   }
 
   // Do the basic validations.
@@ -206,43 +201,47 @@ function drush_http_response_headers_http_header_set_validate($rule_id) {
 /**
  * Sets header rule.
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  */
-function drush_http_response_headers_http_header_set($rule_id) {
+function drush_http_response_headers_http_header_set($machine_name) {
+  $rule = http_response_headers_rule_load($machine_name);
+
   $fields['pages'] = drush_get_option('pages', NULL);
   $fields['types'] = drush_get_option('types', NULL);
   $fields['roles'] = drush_get_option('roles', NULL);
   $fields['visibility'] = drush_get_option('visibility', NULL);
-
   // Remove empty fields.
   $fields = array_filter($fields);
 
-  http_response_headers_update($rule_id, $fields);
-  drush_log(dt('!rule was update.', array('!rule_id' => $rule_id)));
+  foreach ($fields as $field => $value) {
+    $rule->{$field} = $value;
+  }
+  http_response_headers_rule_save($rule);
+  drush_log(dt('!rule was update.', array('!machine_name' => $machine_name)));
 }
 
 /**
  * Validates the given rule ID is valid.
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  */
-function drush_http_response_headers_http_header_get_validate($rule_id) {
-  if (!http_response_headers_load($rule_id)) {
-    return drush_set_error(t('@rule_id is not a valid header rule', array('@rule_id' => $rule_id)));
+function drush_http_response_headers_http_header_get_validate($machine_name) {
+  if (!http_response_headers_rule_load($machine_name)) {
+    return drush_set_error(t('@machine_name is not a valid header rule', array('@machine_name' => $machine_name)));
   }
 }
 
 /**
  * Gets a header rule by rule ID.
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  */
-function drush_http_response_headers_http_header_get($rule_id) {
-  if ($header_rule_object = http_response_headers_load($rule_id)) {
-    drush_print_table(drush_key_value_to_array_table((array) $header_rule_object));
+function drush_http_response_headers_http_header_get($machine_name) {
+  if ($rule = http_response_headers_rule_load($machine_name)) {
+    drush_print_table(drush_key_value_to_array_table((array) $rule));
   }
 }
 
@@ -271,7 +270,7 @@ function drush_http_response_headers_http_header_del() {
   }
 
   if ((count($options) == 1) && drush_get_context('DRUSH_AFFIRMATIVE')) {
-    drush_op('http_response_headers_delete', $args[0]);
+    drush_op('http_response_headers_rule_delete', $args[0]);
     drush_log(dt('!name was deleted.', array('!name' => $args[0])), 'success');
     return '';
   }
@@ -279,7 +278,7 @@ function drush_http_response_headers_http_header_del() {
     $choice = drush_choice($options, 'Enter a number to choose which header rule to delete.');
     if ($choice !== FALSE) {
       $choice = $options[$choice];
-      drush_op('http_response_headers_delete', $choice);
+      drush_op('http_response_headers_rule_delete', $choice);
       drush_log(dt('!choice was deleted.', array('!choice' => $choice)), 'success');
     }
   }
@@ -289,20 +288,20 @@ function drush_http_response_headers_http_header_del() {
  * Lists all header rules available.
  */
 function drush_http_response_headers_http_header_list() {
-  $rules = http_response_headers_list();
+  $rules = http_response_headers_rule_load_all();
   $rows = array();
   foreach ($rules as $rule) {
     $rows[] = array(
-      'rule_id' => $rule->rule_id,
-      'name' => $rule->name,
+      'machine_name' => $rule->machine_name,
+      'description' => $rule->description,
       'header' => $rule->header,
       'header_value' => check_plain($rule->header_value),
     );
   }
   if (!empty($rows)) {
     $headers = array(
-      'rule_id' => dt('Rule ID'),
-      'name' => dt('Name'),
+      'machine_name' => dt('Machine name'),
+      'description' => dt('Description'),
       'header' => dt('Header'),
       'header_value' => dt('Header value'),
     );
@@ -315,11 +314,11 @@ function drush_http_response_headers_http_header_list() {
 /**
  * Query for similar rule names.
  *
- * @param string $rule_id
+ * @param string $machine_name
  *   A string rule ID.
  */
-function drush_http_response_headers_like($rule_id) {
-  return drush_db_select('http_response_headers', 'rule_id', 'rule_id LIKE :keyword OR name LIKE :keyword', array(':keyword' => '%' . $rule_id . '%'), NULL, NULL, 'rule_id');
+function drush_http_response_headers_like($machine_name) {
+  return drush_db_select('http_response_headers', 'machine_name', 'machine_name LIKE :keyword OR description LIKE :keyword', array(':keyword' => '%' . $machine_name . '%'), NULL, NULL, 'machine_name');
 }
 
 /**

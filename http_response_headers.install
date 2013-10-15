@@ -11,28 +11,53 @@
 function http_response_headers_schema() {
   $schema['http_response_headers'] = array(
     'description' => 'Stores customisation settings of HTTP headers, such as region and visibility settings.',
-    'fields' => array(
-      'rule_id' => array(
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => FALSE,
-        'description' => 'Unique rule ID.',
+    'export' => array(
+      'key' => 'machine_name',
+      'key name' => 'Machine name',
+      'cache defaults' => TRUE,                         // Cache exported data.
+      'identifier' => 'rule',
+      'default hook' => 'http_response_headers_default_rule',
+      'api' => array(
+        'owner' => 'http_response_headers',
+        'api' => 'http_response_headers_default_rule',
+        'minimum_version' => 1,
+        'current_version' => 1,
       ),
-      'name' => array(
+
+      'create callback' => 'http_response_headers_rule_create',
+      'load callback' => 'http_response_headers_rule_load',
+      'save callback' => 'http_response_headers_rule_save',
+      'export callback' => 'http_response_headers_rule_export',
+      'object factory' => 'http_response_headers_rule_factory',
+    ),
+    'fields' => array(
+      'rid' => array(
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      'machine_name' => array(
         'type' => 'varchar',
-        'length' => 32,
-        'not null' => FALSE,
-        'description' => 'Name of the rule.',
+        'length' => '255',
+        'description' => 'Machine name for each pool. Used to identify them programmatically.',
+      ),
+      'description' => array(
+        'description' => 'A human readable description of a rule.',
+        'type' => 'varchar',
+        'default' => '',
+        'length' => '255',
       ),
       'header' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => FALSE,
         'description' => "The HTTP header; for example, 'Cache-Control' to set cache lifetime.",
       ),
       'header_value' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => FALSE,
         'description' => "The HTTP header value;",
       ),
@@ -59,10 +84,17 @@ function http_response_headers_schema() {
         'not null' => FALSE,
         'description' => 'User roles',
       ),
+      'data' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'A serialized array with extra parameters pool provides.',
+        'serialize' => TRUE,
+        'no export' => TRUE, // Handle exporting of this field manually
+      ),
     ),
-    'primary key' => array('rule_id'),
-    'indexes' => array(
-      'list' => array('rule_id', 'name'),
+    'primary key' => array('rid'),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
     ),
   );
 
