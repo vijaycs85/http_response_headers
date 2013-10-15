@@ -70,8 +70,6 @@ function http_response_headers_ui_permission() {
   );
 }
 
-
-
 /**
  * Menu callback for header rule configuration.
  */
@@ -207,7 +205,6 @@ function http_response_headers_ui_form(&$form, &$form_state) {
     '#options' => $role_options,
     '#description' => t('Set this header only for the selected role(s). If you select no roles, the rule will be visible to all users.'),
   );
-
 
   // Get rid of default element from export_ui.
   unset($form['info']['machine_name']);

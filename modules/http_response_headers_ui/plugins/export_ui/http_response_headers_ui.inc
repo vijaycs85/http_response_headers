@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Contains export plugin definition for http response headers.
+ */
+
 $plugin = array(
   'schema' => 'http_response_headers',
   'access' => 'administer http response headers',
@@ -23,4 +28,3 @@ $plugin = array(
     'submit' => 'http_response_headers_ui_form_submit',
   ),
 );
-

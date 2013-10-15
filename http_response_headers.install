@@ -14,7 +14,8 @@ function http_response_headers_schema() {
     'export' => array(
       'key' => 'machine_name',
       'key name' => 'Machine name',
-      'cache defaults' => TRUE,                         // Cache exported data.
+      // Cache exported data.
+      'cache defaults' => TRUE,
       'identifier' => 'rule',
       'default hook' => 'http_response_headers_default_rule',
       'api' => array(
@@ -36,7 +37,8 @@ function http_response_headers_schema() {
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'no export' => TRUE, // Do not export database-only keys.
+        // Do not export database-only keys.
+        'no export' => TRUE,
       ),
       'machine_name' => array(
         'type' => 'varchar',
@@ -89,7 +91,8 @@ function http_response_headers_schema() {
         'size' => 'big',
         'description' => 'A serialized array with extra parameters pool provides.',
         'serialize' => TRUE,
-        'no export' => TRUE, // Handle exporting of this field manually
+        // Handle exporting of this field manually.
+        'no export' => TRUE,
       ),
     ),
     'primary key' => array('rid'),

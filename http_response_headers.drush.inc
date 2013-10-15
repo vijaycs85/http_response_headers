@@ -167,15 +167,15 @@ function drush_http_response_headers_http_header_add($machine_name, $header, $he
   $description = drush_get_option('description', NULL);
   $pages = drush_get_option('pages', NULL);
 
-  $rule = new HttpResponseHeadersRule;
+  $rule = new HttpResponseHeadersRule();
   $rule->machine_name = $machine_name;
-    $rule->description = (isset($description)) ? trim(check_plain($description)) : trim(check_plain($machine_name));
-    $rule->header = trim($header);
-    $rule->headerV_value =  trim($header_value);
-    $rule->pages = trim($pages);
-    $rule->visibility = drush_get_option('visibility', 0);
-    $rule->roles = drush_get_option('roles', NULL);
-    $rule->types = drush_get_option('types', NULL);
+  $rule->description = (isset($description)) ? trim(check_plain($description)) : trim(check_plain($machine_name));
+  $rule->header = trim($header);
+  $rule->headerV_value = trim($header_value);
+  $rule->pages = trim($pages);
+  $rule->visibility = drush_get_option('visibility', 0);
+  $rule->roles = drush_get_option('roles', NULL);
+  $rule->types = drush_get_option('types', NULL);
 
   http_response_headers_rule_save($rule);
 

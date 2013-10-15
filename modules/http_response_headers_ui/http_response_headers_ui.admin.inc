@@ -9,19 +9,20 @@
  * Callback for configuration form.
  */
 function http_response_headers_ui_settings_form($form, &$from_state) {
-  $form['http_response_headers']['http_response_headers_allowed_headers'] = array(
+  $form['http_response_headers']['http_response_headers_ui_allowed_headers'] = array(
     '#type' => 'select',
     '#title' => t('Allowed headers'),
-    '#default_value' => variable_get('http_response_headers_allowed_headers', array()),
+    '#default_value' => variable_get('http_response_headers_ui_allowed_headers', array()),
     '#options' => http_response_headers_ui_get_all_headers(),
     '#multiple' => TRUE,
     '#size' => 10,
     '#description' => t('Allowed headers to set via admin UI on <a href="!header_rule_url"> HTTP response headers page</a> page.', array('!header_rule_url' => url('admin/config/system/http-response-headers'))),
   );
-  $form['http_response_headers']['http_response_headers_exclude_pages'] = array(
+  $form['http_response_headers']['http_response_headers_ui_exclude_pages'] = array(
     '#type' => 'textarea',
     '#title' => t('Exclude header rule pages'),
     '#rows' => '5',
+    '#default_value' => variable_get('http_response_headers_ui_exclude_pages'),
     '#description' => t('Excludes header rule check on this pages.'),
   );
 

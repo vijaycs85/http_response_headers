@@ -5,7 +5,7 @@
  * Tests for http_response_headers.module.
  */
 
-class HttpResponseHeadersTestCase extends DrupalWebTestCase {
+class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
   protected $adminUser;
 
   /**
