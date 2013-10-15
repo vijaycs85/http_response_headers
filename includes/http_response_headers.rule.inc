@@ -23,14 +23,7 @@ class HttpResponseHeadersRule {
    */
   public function __construct() {
     // Initialise defaults.
-    $this->description = '';
-    $this->header = '';
-    $this->header_value = '';
-    $this->pages = '';
     $this->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
-    $this->roles = '';
-    $this->types = '';
-    $this->export_type = '';
   }
 
   /**
@@ -55,20 +48,6 @@ class HttpResponseHeadersRule {
     if (!empty($types)) {
       $this->types = implode(',', array_filter($types));
     }
-  }
-
-  /**
-   * Returns any extra data to be exported when exporting to a string.
-   *
-   * If your subclass has more items you want to export than base class, please
-   * export them here.
-   *
-   * @return mixed
-   *   Returns export data.
-   */
-  public function exportData() {
-    $output = '';
-    return $output;
   }
 
 }

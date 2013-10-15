@@ -49,18 +49,7 @@ function http_response_headers_init() {
  *   A HttpResponseHeaders object.
  */
 function http_response_headers_rule_create($set_defaults = TRUE) {
-  $rule = new HttpResponseHeadersRule();
-  if ($set_defaults) {
-    $rule->description = '';
-    $rule->header = '';
-    $rule->header_value = '';
-    $rule->pages = '';
-    $rule->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
-    $rule->roles = '';
-    $rule->types = '';
-  }
-
-  return $rule;
+  return new HttpResponseHeadersRule();
 }
 
 /**
