@@ -104,7 +104,7 @@ function http_response_headers_ui_form(&$form, &$form_state) {
     '#title' => t('HTTP header'),
     '#description' => '',
     '#default_value' => $rule->header,
-    '#options' => variable_get('http_response_headers_allowed_headers', array()),
+    '#options' => variable_get('http_response_headers_ui_allowed_headers', array()),
     '#empty_option' => t('Select a header'),
     '#required' => TRUE,
   );

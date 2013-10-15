@@ -5,7 +5,6 @@
  * Contains HTTP response headers.
  */
 
-
 /**
  * Sets this header on every page except the listed pages.
  */
@@ -194,11 +193,7 @@ function http_response_headers_rule_factory($schema, $data) {
 function http_response_headers_get_rules() {
   global $user;
 
-  $result = db_select('http_response_headers')
-    ->fields('http_response_headers')
-    ->execute();
-
-  $rules = $result->fetchAllAssoc('machine_name');
+  $rules = http_response_headers_rule_load_all();
 
   foreach ($rules as $key => $rule) {
 
@@ -331,7 +326,7 @@ function http_response_headers_rebuild() {
  *   An object
  */
 function _http_response_headers_rebuild($rebuild = FALSE) {
-  $cid = 'http_response_headers';
+  $cid = 'http_response_headers_rule';
 
   if (!$rebuild) {
     $_header_rules = &drupal_static(__FUNCTION__);
@@ -344,10 +339,7 @@ function _http_response_headers_rebuild($rebuild = FALSE) {
     }
   }
 
-  $_header_rules = db_select('http_response_headers', 'h')
-    ->fields('h')
-    ->execute()
-    ->fetchAllAssoc('machine_name');
+  $_header_rules = http_response_headers_rule_load_all();
   cache_set($cid, $_header_rules);
 
   return $_header_rules;
@@ -357,7 +349,7 @@ function _http_response_headers_rebuild($rebuild = FALSE) {
  * Clears the header rule cache.
  */
 function http_response_headers_cache_reset() {
-  cache_clear_all('http_response_headers:', 'cache', TRUE);
+  cache_clear_all('http_response_headers_rule:', 'cache', TRUE);
   drupal_static_reset('_http_response_headers_rebuild');
 }
 

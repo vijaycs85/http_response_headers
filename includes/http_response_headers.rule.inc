@@ -16,6 +16,7 @@ class HttpResponseHeadersRule {
   public $visibility;
   public $types;
   public $roles;
+  public $export_type;
 
   /**
    * Constructs new HttpResponseHeadersRule object.
@@ -29,6 +30,7 @@ class HttpResponseHeadersRule {
     $this->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
     $this->roles = '';
     $this->types = '';
+    $this->export_type = '';
   }
 
   /**
