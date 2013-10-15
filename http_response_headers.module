@@ -43,18 +43,18 @@ function http_response_headers_init() {
  *
  * Chaos tools export create callback for the http_response_headers table.
  *
- * @param $set_defaults
- *   A boolean, passed in from Chaos tools, TRUE by default.
+ * @param bool $set_defaults
+ *   A boolean passed in from Chaos tools, TRUE by default.
  *
  * @return Object
  *   A HttpResponseHeaders object.
  */
 function http_response_headers_rule_create($set_defaults = TRUE) {
-  $rule = new HttpResponseHeadersRule;
+  $rule = new HttpResponseHeadersRule();
   if ($set_defaults) {
     $rule->description = '';
     $rule->header = '';
-    $rule->headerV_value = '';
+    $rule->header_value = '';
     $rule->pages = '';
     $rule->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
     $rule->roles = '';
@@ -79,7 +79,7 @@ function http_response_headers_rule_load($machine_name, $reset = FALSE) {
   // Use CTools export API to fetch this header rule.
   ctools_include('export');
 
-  // Reset the static cache if required
+  // Reset the static cache if required.
   if ($reset) {
     ctools_export_load_object_reset('http_response_headers');
   }
@@ -94,7 +94,7 @@ function http_response_headers_rule_load($machine_name, $reset = FALSE) {
 /**
  * Load all header rules.
  *
- * @return Array
+ * @return array
  *   An array of HttpResponseHeadersRule objects, keyed by the machine name of
  *   each pool.
  */
@@ -151,11 +151,26 @@ function http_response_headers_rule_export($object, $indent = '') {
   $output .= $indent . '$header_rule->visibility =  "' . $object->visibility . "\";\n";
   $output .= $indent . '$header_rule->pages = "' . $object->pages . "\";\n";
   $output .= $indent . '$header_rule->types = "' . $object->types . "\";\n";
-  $output .= $indent . '$header_rule->roles =  "' .$object->roles   . "\";\n";
+  $output .= $indent . '$header_rule->roles =  "' . $object->roles   . "\";\n";
 
   return $output;
 }
 
+/**
+ * Factory for rule objects.
+ *
+ * Chaos tools export object factory callback for the
+ * http_response_headers table.
+ *
+ * @param string $schema
+ *   An array, a Drupal table schema definition as returned by
+ *   drupal_get_schema().
+ * @param object $data
+ *   An object, a row from the http_response_headers table.
+ *
+ * @return HttpResponseHeadersRule
+ *   A HttpResponseHeadersRule object.
+ */
 function http_response_headers_rule_factory($schema, $data) {
   $rule = unserialize($data->data);
   $rule->machine_name = $data->machine_name;

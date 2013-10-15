@@ -24,7 +24,7 @@ class HttpResponseHeadersRule {
     // Initialise defaults.
     $this->description = '';
     $this->header = '';
-    $this->headerV_value = '';
+    $this->header_value = '';
     $this->pages = '';
     $this->visibility = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
     $this->roles = '';
