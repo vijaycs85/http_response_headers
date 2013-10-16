@@ -101,13 +101,21 @@ function http_response_headers_schema() {
     ),
   );
 
+  $schema['cache_http_response_headers'] = drupal_get_schema_unprocessed('system', 'cache');
+
   return $schema;
 }
 
 /**
+ * @file
+ * Install, update and uninstall functions for the HTTP response headers UI module.
+ */
+
+
+/**
  * Implements hook_uninstall().
  */
-function http_response_headers_uninstall() {
+function http_response_headers_uuninstall() {
   // Remove variables created.
   variable_del('http_response_headers_allowed_headers');
   variable_del('http_response_headers_exclude_pages');

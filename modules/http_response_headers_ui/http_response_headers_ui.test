@@ -16,9 +16,9 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Http Response Header UI functionality',
+      'name' => 'Http Response Headers UI test',
       'description' => 'Add, edit and delete HTTP header rule.',
-      'group' => 'HTTP Headers',
+      'group' => 'HTTP response headers',
     );
   }
 
@@ -207,12 +207,15 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    * Setup default configuration for HTTP response headers.
    */
   protected function setupDefaultConfiguration() {
-    $edit['http_response_headers_ui_allowed_headers[]'] = array(
+    $edit['http_response_headers_allowed_headers[]'] = array(
       'Cache-Control' => 'Cache-Control',
       'Expires' => 'Expires',
       'X-Frame-Options' => 'X-Frame-Options',
       'Last-Modified' => 'Last-Modified',
     );
+
+    // Make sure admin pages are excluded globally.
+    $edit['http_response_headers_exclude_pages'] = 'admin*';
 
     $this->drupalPost('admin/config/system/http-response-headers/settings', $edit, t('Save configuration'));
   }

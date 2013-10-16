@@ -5,48 +5,6 @@
  * Contains definitions.
  */
 
-
-/**
- * Implements hook_help().
- */
-function http_response_headers_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#http_response_headers':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('The HTTP response headers module allows you to create header rules, which are rendered to one or more pages of a website. The <a href="@http_response_headers">HTTP response header administration page</a> provides an interface to manage header rules.', array('@http_response_headers' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
-      $output .= '<h3>' . t('Uses') . '</h3>';
-      $output .= '<dl>';
-      $output .= '<dt>' . t('Configure HTTP headers') . '</dt>';
-      $output .= '<dd>' . t('Users with the <em>Administer blocks</em> permission can configure the list of allowed headers to create rules. Headers list can be configured from <a href="@header-config">HTTP response header settings page</a>.', array('@header-config' => url('admin/config/system/http-response-headers/settings'))) . '</dd>';
-      $output .= '<dt>' . t('Creating header rules') . '</dt>';
-      $output .= '<dd>' . t('Users with the <em>administer http response headers</em> permission can <a href="@header-add">add header rules</a>, which are then listed on the <a href="@header-list">HTTP response headers administration page</a>.', array('@header-list' => url('admin/config/system/http-response-headers'), '@header-add' => url('admin/config/system/http-response-headers/add'))) . '</dd>';
-      $output .= '<dt>' . t('Controlling visibility') . '</dt>';
-      $output .= '<dd>' . t('Header rules can be configured to be applied only on certain pages, only to users of certain roles, or only on pages displaying certain <a href="@content-type">content types</a>.', array('@content-type' => url('admin/structure/types'), '@user' => url('user'))) . '</dd>';
-      $output .= '</dl>';
-      return $output;
-
-    case 'admin/config/system/http-response-headers':
-      return '<p>' . t('The allowed headers can be configured from  <a href="@header_url">configuration</a>', array('@header_url' => url('admin/config/system/http-response-headers/settings'))) . '</p>';
-  }
-}
-
-/**
- * Implements hook_menu().
- */
-function http_response_headers_ui_menu() {
-  $items['admin/config/system/http-response-headers/settings'] = array(
-    'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('http_response_headers_ui_settings_form'),
-    'access arguments' => array('administer http response headers'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'http_response_headers_ui.admin.inc',
-  );
-
-  return $items;
-}
-
 /**
  * Implements hook_ctools_plugin_directory().
  */
@@ -57,39 +15,25 @@ function http_response_headers_ui_ctools_plugin_directory($module, $plugin) {
 }
 
 /**
- * Implements hook_permission().
- */
-function http_response_headers_ui_permission() {
-  return array(
-    'administer http response headers' => array(
-      'title' => t('Administer HTTP response headers'),
-    ),
-    'Add http response headers' => array(
-      'title' => t('Add HTTP response headers'),
-    ),
-  );
-}
-
-/**
  * Menu callback for header rule configuration.
  */
 function http_response_headers_ui_form(&$form, &$form_state) {
   $rule = $form_state['item'];
-
+  $machine_name = $rule->getMachineName();
   $form['description'] = array(
     '#title' => t('Description'),
     '#type' => 'textfield',
     '#default_value' => $rule->description,
     '#description' => t('The human-readable name of this rule. It is recommended that this name begin with a capital letter and contain only letters, numbers, and spaces. This name must be unique.'),
-    '#disabled' => isset($rule->machine_name) ? TRUE : FALSE,
+    '#disabled' => isset($machine_name) ? TRUE : FALSE,
     '#required' => TRUE,
     '#size' => 30,
   );
   $form['machine_name'] = array(
     '#type' => 'machine_name',
-    '#default_value' => $rule->machine_name,
+    '#default_value' => $machine_name,
     '#maxlength' => 32,
-    '#disabled' => isset($rule->machine_name) ? TRUE : FALSE,
+    '#disabled' => isset($machine_name) ? TRUE : FALSE,
     '#machine_name' => array(
       'exists' => 'http_response_headers_ui_rule_exists',
       'source' => array('description'),
@@ -103,8 +47,8 @@ function http_response_headers_ui_form(&$form, &$form_state) {
     '#type' => 'select',
     '#title' => t('HTTP header'),
     '#description' => '',
-    '#default_value' => $rule->header,
-    '#options' => variable_get('http_response_headers_ui_allowed_headers', array()),
+    '#default_value' => $rule->getHeader(),
+    '#options' => variable_get('http_response_headers_allowed_headers', array()),
     '#empty_option' => t('Select a header'),
     '#required' => TRUE,
   );
@@ -113,7 +57,7 @@ function http_response_headers_ui_form(&$form, &$form_state) {
     '#title' => t('HTTP header value'),
     '#maxlength' => 64,
     '#description' => '',
-    '#default_value' => $rule->header_value,
+    '#default_value' => $rule->getHeaderValue(),
     '#required' => TRUE,
   );
 
@@ -153,7 +97,7 @@ function http_response_headers_ui_form(&$form, &$form_state) {
     '#type' => 'radios',
     '#title' => t('Set header on specific pages'),
     '#options' => $options,
-    '#default_value' => $rule->visibility,
+    '#default_value' => $rule->getVisibility(),
   );
 
   $form['visibility']['path']['pages'] = array(
@@ -165,8 +109,9 @@ function http_response_headers_ui_form(&$form, &$form_state) {
 
   // Per-node-type visibility.
   $default_type_options = array();
-  if (!empty($rule->types)) {
-    $default_type_options = explode(',', $rule->types);
+  $types = $rule->getTypes();
+  if (!empty($types)) {
+    $default_type_options = explode(',', $types);
   }
   $form['visibility']['node_type'] = array(
     '#type' => 'fieldset',
@@ -186,8 +131,9 @@ function http_response_headers_ui_form(&$form, &$form_state) {
 
   // Per-role visibility.
   $default_role_options = array();
-  if (!empty($rule->roles)) {
-    $default_role_options = explode(',', $rule->roles);
+  $roles = $rule->getRoles();
+  if (!empty($roles)) {
+    $default_role_options = explode(',', $roles);
   }
   $role_options = array_map('check_plain', user_roles());
   $form['visibility']['role'] = array(

@@ -164,18 +164,18 @@ function drush_http_response_headers_http_header_add_validate($machine_name, $he
  *   A string header value.
  */
 function drush_http_response_headers_http_header_add($machine_name, $header, $header_value) {
-  $description = drush_get_option('description', NULL);
+  $description = drush_get_option('description', NULL) ? trim(check_plain(drush_get_option('description', NULL))) : trim(check_plain($machine_name));
   $pages = drush_get_option('pages', NULL);
 
   $rule = new HttpResponseHeadersRule();
-  $rule->machine_name = $machine_name;
-  $rule->description = (isset($description)) ? trim(check_plain($description)) : trim(check_plain($machine_name));
-  $rule->header = trim($header);
-  $rule->headerV_value = trim($header_value);
-  $rule->pages = trim($pages);
-  $rule->visibility = drush_get_option('visibility', 0);
-  $rule->roles = drush_get_option('roles', NULL);
-  $rule->types = drush_get_option('types', NULL);
+  $rule->setMachineName($machine_name)
+    ->setDescription($description)
+    ->setHeader(trim($header))
+    ->setHeaderValue(trim($header_value))
+    ->setPages(trim($pages))
+    ->setVisibility(drush_get_option('visibility',HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED))
+    ->setRoles(drush_get_option('roles', NULL))
+    ->setTypes(drush_get_option('types', NULL));
 
   http_response_headers_rule_save($rule);
 
@@ -207,16 +207,19 @@ function drush_http_response_headers_http_header_set_validate($machine_name) {
 function drush_http_response_headers_http_header_set($machine_name) {
   $rule = http_response_headers_rule_load($machine_name);
 
-  $fields['pages'] = drush_get_option('pages', NULL);
-  $fields['types'] = drush_get_option('types', NULL);
-  $fields['roles'] = drush_get_option('roles', NULL);
-  $fields['visibility'] = drush_get_option('visibility', NULL);
-  // Remove empty fields.
-  $fields = array_filter($fields);
-
-  foreach ($fields as $field => $value) {
-    $rule->{$field} = $value;
+  if ($pages = drush_get_option('pages', NULL)) {
+    $rule->setPages($pages);
   }
+  if ($visibility = drush_get_option('visibility', NULL)) {
+    $rule->setTypes($visibility);
+  }
+  if ($types = drush_get_option('types', NULL)) {
+    $rule->setTypes($types);
+  }
+  if ($roles = drush_get_option('roles', NULL)) {
+    $rule->setRoles($roles);
+  }
+
   http_response_headers_rule_save($rule);
   drush_log(dt('!rule was update.', array('!machine_name' => $machine_name)));
 }
@@ -291,11 +294,12 @@ function drush_http_response_headers_http_header_list() {
   $rules = http_response_headers_rule_load_all();
   $rows = array();
   foreach ($rules as $rule) {
+
     $rows[] = array(
-      'machine_name' => $rule->machine_name,
-      'description' => $rule->description,
-      'header' => $rule->header,
-      'header_value' => check_plain($rule->header_value),
+      'machine_name' => $rule->getMachineName(),
+      '' => $rule->getDescription(),
+      'header' => $rule->getHeader(),
+      'header_value' => $rule->getHeaderValue(),
     );
   }
   if (!empty($rows)) {
