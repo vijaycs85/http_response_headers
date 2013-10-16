@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Tests for http_response_headers_ui.module.
+ * Tests for http_response_headers.module.
  */
 
-class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
+class HttpResponseHeadersTestCase extends DrupalWebTestCase {
   protected $adminUser;
 
   /**
@@ -16,7 +16,7 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Http Response Header UI functionality',
+      'name' => 'Http Response Header functionality',
       'description' => 'Add, edit and delete HTTP header rule.',
       'group' => 'HTTP Headers',
     );
@@ -26,7 +26,7 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    * Sets up test environment.
    */
   protected function setUp() {
-    parent::setUp('http_response_headers_ui');
+    parent::setUp('http_response_headers');
 
     // Create and log in an administrative user.
     $this->adminUser = $this->drupalCreateUser(array(
@@ -39,57 +39,6 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
     $this->setupDefaultConfiguration();
   }
 
-  /**
-   * Test creating header rule.
-   */
-  public function testHeaderRuleAdminUI() {
-
-    // Confirm that the add rule link appears on header rule overview pages.
-    $this->drupalGet('admin/config/system/http-response-headers');
-    $this->assertRaw(l(t('Add'), 'admin/config/system/http-response-headers/add'), 'Add header rule link is present on overview page.');
-
-    // Add a new header rule by filling out the input
-    // form on the admin/config/system/http-response-headers/add page.
-    $name = $this->randomName(8);
-    $visibility_options = array(
-      'pages' => 'node/*',
-      'visibility' => HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED,
-      'types[article]' => 'article',
-    );
-    $this->createHeaderRule(strtolower($name), $name, 'Cache-Control', 'max-age=3600', $visibility_options);
-
-    // Confirm that the header rule has been created, and then
-    // query the created machine_name.
-    $this->assertText(t('!name has been created.', array('!name' => strtolower($name))), 'Header rule successfully created.');
-    $machine_name = db_query("SELECT machine_name FROM {http_response_headers} WHERE description= :name", array(':name' => strtolower($name)))->fetchField();
-
-    // Check to see if the header rule was created by checking
-    // that it's in the database.
-    $this->assertNotNull($machine_name, 'Header rule found in database');
-
-    // Check that http_response_headers_rule_load() returns
-    // the correct name and content.
-    $data = http_response_headers_rule_load($machine_name);
-    $this->assertEqual('max-age=3600', $data->header_value, 'http_response_headers_rule_load() provides correct header details.');
-
-    // Verify presence of configure and delete links for header rule.
-    $this->drupalGet('admin/config/system/http-response-headers');
-    $this->assertLinkByHref('admin/config/system/http-response-headers/list/' . $machine_name . '/edit', 0, 'Header rule configure link found.');
-    $this->assertLinkByHref('admin/config/system/http-response-headers/list/' . $machine_name . '/delete', 0, 'Header rule delete link found.');
-
-    // Set visibility only for authenticated users,
-    // to verify delete functionality.
-    $edit = array();
-    $edit['roles[' . DRUPAL_AUTHENTICATED_RID . ']'] = TRUE;
-    $this->drupalPost('admin/config/system/http-response-headers/list/' . $machine_name . '/edit', $edit, t('Save'));
-
-    // Delete the created header rule  & verify that it's been deleted
-    // and no longer applying on the page.
-    $this->deleteHeaderRule(strtolower($name));
-    $this->assertRaw(t('The item has been deleted.'), 'Header rule successfully deleted.');
-    $count = db_query("SELECT 1 FROM {http_response_headers} WHERE description= :name", array(':name' => $name))->fetchField();
-    $this->assertFalse($count, 'Table http_response_headers being cleaned.');
-  }
 
   /**
    * Test header rule visibility.
@@ -98,19 +47,12 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
     // Create a random name for the header rule.
     $name = $this->randomName(8);
     $visibility_options = array();
+    $visibility_options['pages'] = 'user*';
+    $visibility_options['visibility'] = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
+    $visibility_options['roles'] = DRUPAL_AUTHENTICATED_RID;
     $header = 'Cache-Control';
     $header_value = 'max-age=3600';
     $this->createHeaderRule(strtolower($name), $name, $header, $header_value, $visibility_options);
-
-    $machine_name = db_query("SELECT machine_name FROM {http_response_headers} WHERE description= :name", array(':name' => strtolower($name)))->fetchField();
-
-    // Set the header rule to be not applied on any user path, and to be
-    // applied only to authenticated users.
-    $edit = array();
-    $edit['pages'] = 'user*';
-    $edit['visibility'] = HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
-    $edit['roles[' . DRUPAL_AUTHENTICATED_RID . ']'] = TRUE;
-    $this->drupalPost('admin/config/system/http-response-headers/list/' . $machine_name . '/edit', $edit, t('Save'));
 
     $this->drupalGet('');
     $headers = $this->drupalGetHeaders();
@@ -132,23 +74,16 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test header rule with empty "pages" textarea.
+   * Test header rule with empty "pages".
    */
   public function testHeaderRuleVisibilityListedEmpty() {
     // Create a random name for the header rule.
     $name = $this->randomName(8);
     $visibility_options = array();
+    $visibility_options['visibility'] = BLOCK_VISIBILITY_LISTED;
     $header = 'Cache-Control';
     $header_value = 'max-age=3600';
     $this->createHeaderRule(strtolower($name), $name, $header, $header_value, $visibility_options);
-
-    $machine_name = db_query("SELECT machine_name FROM {http_response_headers} WHERE description= :name", array(':name' => strtolower($name)))->fetchField();
-
-    // Set the rule to be hidden on any user path, and to be applied only to
-    // authenticated users.
-    $edit = array();
-    $edit['visibility'] = BLOCK_VISIBILITY_LISTED;
-    $this->drupalPost('admin/config/system/http-response-headers/list/' . $machine_name . '/edit', $edit, t('Save'));
 
     $this->drupalGet('');
     $headers = $this->drupalGetHeaders();
@@ -207,14 +142,12 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    * Setup default configuration for HTTP response headers.
    */
   protected function setupDefaultConfiguration() {
-    $edit['http_response_headers_ui_allowed_headers[]'] = array(
+    variable_set('http_response_headers_ui_allowed_headers', array(
       'Cache-Control' => 'Cache-Control',
       'Expires' => 'Expires',
       'X-Frame-Options' => 'X-Frame-Options',
       'Last-Modified' => 'Last-Modified',
-    );
-
-    $this->drupalPost('admin/config/system/http-response-headers/settings', $edit, t('Save configuration'));
+    ));
   }
 
   /**
@@ -235,12 +168,26 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    *   A string rule ID created.
    */
   protected function createHeaderRule($machine_name, $name, $header, $header_value, $visibility_options = array()) {
-    $header_rule['description'] = $name;
-    $header_rule['machine_name'] = $machine_name;
-    $header_rule['header'] = $header;
-    $header_rule['header_value'] = $header_value;
-    $header_rule += $visibility_options;
-    $this->drupalPost('admin/config/system/http-response-headers/add', $header_rule, t('Save'));
+    $header_rule = new HttpResponseHeadersRule();
+    $header_rule->description = $name;
+    $header_rule->machine_name = $machine_name;
+    $header_rule->header = $header;
+    $header_rule->header_value = $header_value;
+    $header_rule->visibility = isset($visibility_options['visibility']) ? $visibility_options['visibility'] : HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED;
+
+    if (isset($visibility_options['pages'])) {
+      $header_rule->pages = $visibility_options['pages'];
+    }
+
+    if (isset($visibility_options['types'])) {
+      $header_rule->types = $visibility_options['types'];
+    }
+
+    if (isset($visibility_options['roles'])) {
+      $header_rule->roles = $visibility_options['roles'];
+    }
+
+    http_response_headers_rule_save($header_rule);
     return $machine_name;
   }
 
@@ -251,10 +198,7 @@ class HttpResponseHeadersUITestCase extends DrupalWebTestCase {
    *   A string rule ID.
    */
   protected function deleteHeaderRule($machine_name) {
-    $this->drupalGet('admin/config/system/http-response-headers');
-    $this->clickLink(t('Delete'));
-    $this->drupalPost('admin/config/system/http-response-headers/list/' . $machine_name . '/delete', array(), t('Delete'));
-    $this->assertNoRaw($machine_name, 'Header rule no longer appears on page.');
-
+    http_response_headers_rule_delete($machine_name);
   }
+
 }
