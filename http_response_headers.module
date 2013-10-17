@@ -104,7 +104,7 @@ function http_response_headers_permission() {
 }
 
 /**
- * Implementation of hook_flush_cache().
+ * Implements hook_flush_cache().
  */
 function http_response_headers_flush_caches() {
   return array('cache_http_response_headers');
@@ -259,7 +259,7 @@ function http_response_headers_get_rules() {
   global $user;
 
   // Convert the Drupal path to lowercase.
-  $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+  $path = drupal_strtolower(drupal_get_path_alias());
 
   // Cache key for page.
   $cid = 'http_response_headers_page:' . _http_response_headers_get_page_cache_id($path);
@@ -301,8 +301,9 @@ function http_response_headers_get_rules() {
       if ($rule_visibility <= HTTP_RESPONSE_HEADERS_VISIBILITY_LISTED) {
         // Compare the lowercase internal and lowercase path alias (if any).
         $page_match = drupal_match_path($path, $pages);
-        if ($path != $_GET['q']) {
-          $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+        $current_path = request_path();
+        if ($path != $current_path) {
+          $page_match = $page_match || drupal_match_path($current_path, $pages);
         }
         // When $rule->getVisibility() has a value of 0
         // (HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED),the header is set on
@@ -430,15 +431,16 @@ function http_response_headers_last_modified_callback($seconds = 0) {
 function http_response_headers_is_global_exclude_path($path = NULL) {
   if (!$path) {
     // Convert the Drupal path to lowercase.
-    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    $path = drupal_strtolower(drupal_get_path_alias());
   }
 
   if ($pages = variable_get('http_response_headers_exclude_pages', NULL)) {
     $pages = drupal_strtolower($pages);
     // Compare the lowercase internal and lowercase path alias (if any).
     $page_match = drupal_match_path($path, $pages);
-    if ($path != $_GET['q']) {
-      return $page_match || drupal_match_path($_GET['q'], $pages);
+    $current_path = request_path();
+    if ($path != $current_path) {
+      return $page_match || drupal_match_path($current_path, $pages);
     }
     return $page_match;
   }
@@ -460,7 +462,7 @@ function _http_response_headers_get_page_cache_id($cache_key) {
     global $user;
     $roles = array_keys($user->roles);
     asort($roles);
-    // cache by path and user roles.
+    // Cache by path and user roles.
     $cache_key .= implode(':', $roles);
   }
   return md5($cache_key);
