@@ -112,6 +112,7 @@ class HttpResponseHeadersRule {
    * Sets description.
    *
    * @param string $description
+   *   A string rule description.
    *
    * @return HttpResponseHeadersRule
    *   The processed object.
@@ -261,7 +262,7 @@ class HttpResponseHeadersRule {
    * Sets content types.
    *
    * @param string $types
-   *  A string of comma separated content types.
+   *   A string of comma separated content types.
    *
    * @return HttpResponseHeadersRule
    *   The processed object.
@@ -355,6 +356,7 @@ class HttpResponseHeadersRule {
    * Checks the roles against given $user_roles.
    *
    * @param array $user_roles
+   *   An array of user role IDs.
    *
    * @return bool
    *   TRUE if exist, FALSE otherwise.

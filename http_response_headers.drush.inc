@@ -173,7 +173,7 @@ function drush_http_response_headers_http_header_add($machine_name, $header, $he
     ->setHeader(trim($header))
     ->setHeaderValue(trim($header_value))
     ->setPages(trim($pages))
-    ->setVisibility(drush_get_option('visibility',HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED))
+    ->setVisibility(drush_get_option('visibility', HTTP_RESPONSE_HEADERS_VISIBILITY_NOTLISTED))
     ->setRoles(drush_get_option('roles', NULL))
     ->setTypes(drush_get_option('types', NULL));
 

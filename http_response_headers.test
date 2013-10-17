@@ -117,8 +117,9 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
     // Get user page to check Expires has
     // 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
     $this->drupalGet('user');
+    $expected_value = http_response_headers_expires_callback($header_value);
     $headers = $this->drupalGetHeaders();
-    $this->assertEqual($headers[strtolower($header)], http_response_headers_expires_callback($header_value), 'Expires header was applied to user pages.');
+    $this->assertEqual($headers[strtolower($header)], $expected_value, 'Expires header was applied to user pages.');
 
     // Create a header rule with 'Last-Modified' header.
     $name = $this->randomName(8);
@@ -133,8 +134,9 @@ class HttpResponseHeadersTestCase extends DrupalWebTestCase {
     // Get user page to check Last-Modified has
     // 'Mon, 14 Oct 2013 15:42:25 +0000' format value, instead of 3600.
     $this->drupalGet('user');
+    $expected_value = http_response_headers_last_modified_callback($header_value);
     $headers = $this->drupalGetHeaders();
-    $this->assertEqual($headers[strtolower($header)], http_response_headers_last_modified_callback($header_value), 'Last-Modified header was applied to user pages.');
+    $this->assertEqual($headers[strtolower($header)], $expected_value, 'Last-Modified header was applied to user pages.');
 
   }
 

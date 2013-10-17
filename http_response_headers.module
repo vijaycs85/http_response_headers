@@ -58,23 +58,19 @@ function http_response_headers_init() {
 
   $rules = http_response_headers_get_rules();
   $callbacks = http_response_headers_get_header_callbacks();
-  $header_rules = array();
 
   foreach ($rules as $rule) {
     $header_value = $rule->getHeaderValue();
-
-    // @TODO: Find a way to callback on creating or editing of rule.
-    // Process data with callback, if exist.
     $header = $rule->getHeader();
+
+    // Call header value process call back, if exist.
     if (isset($callbacks[$header]) && $callback = $callbacks[$header]) {
       if (function_exists($callback)) {
         $header_value = call_user_func_array($callback, array($header_value));
       }
     }
 
-    $header_rules[$header] =  $header_value;
-  }
-  foreach ($header_rules as $header => $header_value) {
+    // Set response header.
     drupal_add_http_header($header, $header_value);
   }
 }
@@ -108,7 +104,7 @@ function http_response_headers_permission() {
 }
 
 /**
- * Implementation of hook_flush_cache
+ * Implementation of hook_flush_cache().
  */
 function http_response_headers_flush_caches() {
   return array('cache_http_response_headers');
@@ -199,6 +195,9 @@ function http_response_headers_rule_save(HttpResponseHeadersRule $rule) {
     ))
     ->execute();
 
+  // Clear the header rules cache.
+  http_response_headers_cache_reset();
+
   return TRUE;
 }
 
@@ -263,7 +262,7 @@ function http_response_headers_get_rules() {
   $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
 
   // Cache key for page.
-  $cid = 'http_response_headers_page:' . md5($path);
+  $cid = 'http_response_headers_page:' . _http_response_headers_get_page_cache_id($path);
 
   // Get rules from cache for this page, if exist.
   if ($rule_cached = cache_get($cid, HTTP_RESPONSE_HEADERS_CACHE_BIN)) {
@@ -276,7 +275,6 @@ function http_response_headers_get_rules() {
     // If a rule has no roles associated, it is displayed for every role.
     // For rules with roles associated, if none of the user's roles matches
     // the settings from this rule, remove it from the rule list.
-
     if ($rule->hasRoles() && $rule->rolesExist($user->roles)) {
       // No match.
       unset($rules[$key]);
@@ -445,4 +443,25 @@ function http_response_headers_is_global_exclude_path($path = NULL) {
     return $page_match;
   }
   return FALSE;
+}
+
+/**
+ * Helper to format cache key.
+ *
+ * @param string $cache_key
+ *   A string key.
+ *
+ * @return string
+ *   A updated hash key value.
+ */
+function _http_response_headers_get_page_cache_id($cache_key) {
+  // Don't calculate roles for anonymous user.
+  if (!user_is_anonymous()) {
+    global $user;
+    $roles = array_keys($user->roles);
+    asort($roles);
+    // cache by path and user roles.
+    $cache_key .= implode(':', $roles);
+  }
+  return md5($cache_key);
 }

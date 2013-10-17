@@ -71,7 +71,7 @@ function http_response_headers_schema() {
       ),
       'pages' => array(
         'type' => 'text',
-        'not null' => TRUE,
+        'not null' => FALSE,
         'description' => 'Contains a list of paths on which to include/exclude the rule, depending on "visibility" setting.',
       ),
       'types' => array(
@@ -105,12 +105,6 @@ function http_response_headers_schema() {
 
   return $schema;
 }
-
-/**
- * @file
- * Install, update and uninstall functions for the HTTP response headers UI module.
- */
-
 
 /**
  * Implements hook_uninstall().
