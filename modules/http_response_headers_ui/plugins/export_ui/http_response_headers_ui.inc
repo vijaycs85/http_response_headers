@@ -24,7 +24,6 @@ $plugin = array(
   // Define the names of the functions that provide the add/edit forms.
   'form' => array(
     'settings' => 'http_response_headers_ui_form',
-    'validate' => 'http_response_headers_ui_form_validate',
     'submit' => 'http_response_headers_ui_form_submit',
   ),
 );

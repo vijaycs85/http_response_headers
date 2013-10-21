@@ -212,10 +212,10 @@ function http_response_headers_rule_export($object, $indent = '') {
   $output .= $indent . '$header_rule->description = "' . $object->getDescription() . "\";\n";
   $output .= $indent . '$header_rule->header = "' . $object->getHeader() . "\";\n";
   $output .= $indent . '$header_rule->header_value = "' . $object->getHeaderValue() . "\";\n";
-  $output .= $indent . '$header_rule->visibility =  "' . $object->getVisibility() . "\";\n";
+  $output .= $indent . '$header_rule->visibility = "' . $object->getVisibility() . "\";\n";
   $output .= $indent . '$header_rule->pages = "' . $object->getPages() . "\";\n";
   $output .= $indent . '$header_rule->types = "' . $object->getTypes() . "\";\n";
-  $output .= $indent . '$header_rule->roles =  "' . $object->getRoles()   . "\";\n";
+  $output .= $indent . '$header_rule->roles = "' . $object->getRoles() . "\";\n";
 
   return $output;
 }

@@ -55,7 +55,6 @@ function http_response_headers_ui_form(&$form, &$form_state) {
   $form['settings']['header_value'] = array(
     '#type' => 'textfield',
     '#title' => t('HTTP header value'),
-    '#maxlength' => 64,
     '#description' => '',
     '#default_value' => $rule->getHeaderValue(),
     '#required' => TRUE,
