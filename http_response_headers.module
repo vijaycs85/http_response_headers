@@ -73,13 +73,6 @@ function http_response_headers_init() {
         break;
     }
 
-    // Call header value process call back, if exist.
-    if (isset($callbacks[$header]) && $callback = $callbacks[$header]) {
-      if (function_exists($callback)) {
-        $header_value = call_user_func_array($callback, array($header_value));
-      }
-    }
-
     // Set response header.
     drupal_add_http_header($header, $header_value);
   }
