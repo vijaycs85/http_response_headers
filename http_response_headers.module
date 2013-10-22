@@ -52,16 +52,26 @@ function http_response_headers_help($path, $arg) {
 function http_response_headers_init() {
 
   // Exclude pages on global exclude list.
-  if (http_response_headers_is_global_exclude_path()) {
+  if (http_response_headers_exclude_path()) {
     return;
   }
 
   $rules = http_response_headers_get_rules();
-  $callbacks = http_response_headers_get_header_callbacks();
 
   foreach ($rules as $rule) {
     $header_value = $rule->getHeaderValue();
     $header = $rule->getHeader();
+
+    // Handle custom callback cases.
+    switch (strtolower($header)) {
+      case 'expires':
+        $header_value = http_response_headers_expires_callback($header_value);
+        break;
+
+      case 'last-modified':
+        $header_value = http_response_headers_last_modified_callback($header_value);
+        break;
+    }
 
     // Call header value process call back, if exist.
     if (isset($callbacks[$header]) && $callback = $callbacks[$header]) {
@@ -387,19 +397,6 @@ function http_response_headers_cache_reset() {
 }
 
 /**
- * Provides process callback for headers.
- *
- * @return array
- *   An array of process callbacks with keyed with header.
- */
-function http_response_headers_get_header_callbacks() {
-  return array(
-    'Expires' => 'http_response_headers_expires_callback',
-    'Last-Modified' => 'http_response_headers_last_modified_callback',
-  );
-}
-
-/**
  * Process callback for expires header.
  *
  * @param int $seconds
@@ -426,9 +423,17 @@ function http_response_headers_last_modified_callback($seconds = 0) {
 }
 
 /**
- * Helper to verify given path in excluded list.
+ * Helper to verify given path in exclude list.
+ *
+ * Path can be any drupal internal path.
+ *
+ * @param string|null $path
+ *   A string path. Current path used, if no path specified explicitly.
+ *
+ * @return bool
+ *   TRUE if path in exclude list, FALSE otherwise.
  */
-function http_response_headers_is_global_exclude_path($path = NULL) {
+function http_response_headers_exclude_path($path = NULL) {
   if (!$path) {
     // Convert the Drupal path to lowercase.
     $path = drupal_strtolower(drupal_get_path_alias());
@@ -437,12 +442,7 @@ function http_response_headers_is_global_exclude_path($path = NULL) {
   if ($pages = variable_get('http_response_headers_exclude_pages', NULL)) {
     $pages = drupal_strtolower($pages);
     // Compare the lowercase internal and lowercase path alias (if any).
-    $page_match = drupal_match_path($path, $pages);
-    $current_path = request_path();
-    if ($path != $current_path) {
-      return $page_match || drupal_match_path($current_path, $pages);
-    }
-    return $page_match;
+    return drupal_match_path($path, $pages);
   }
   return FALSE;
 }
