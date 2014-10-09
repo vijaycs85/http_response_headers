@@ -7,7 +7,7 @@ settings. Currently the headers can be set by path, content type and user role.
 Status:
 -------
 
-<img src="https://insight.sensiolabs.com/projects/79e25957-90ee-48e0-be96-3c5a5f62bbb2/big.png" />
+<img src="https://insight.sensiolabs.com/projects/79e25957-90ee-48e0-be96-3c5a5f62bbb2/mini.png" />
 
 Installation:
 -------------
